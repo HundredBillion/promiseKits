@@ -1,0 +1,17 @@
+<div class="container">
+  <h1>Available Fitness Kits</h1>
+
+  <% if @promise_fitness_kits.empty? %>
+    <p class="empty-state">No fitness kits available at this time.</p>
+  <% else %>
+    <div class="fitness-kits">
+      <% @promise_fitness_kits.each do |kit| %>
+        <div class="kit-card">
+          <h2><%= kit.name %></h2>
+          <p class="kit-description"><%= kit.description %></p>
+          <%= link_to 'Order This Kit', new_promise_fitness_kit_order_path(kit), class: 'btn btn-primary' %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
