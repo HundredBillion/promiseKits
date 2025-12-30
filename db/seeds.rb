@@ -10,18 +10,33 @@ end
 puts "Creating fitness kits..."
 
 kit1 = PromiseFitnessKit.create!(
-  name: 'Beginner Strength Kit',
-  description: 'Perfect for those starting their fitness journey. Includes resistance bands, workout guide, and nutrition plan.'
+  name: 'SK-1',
+  description: '2lb db, xlight & light resistance tube'
 )
 
 kit2 = PromiseFitnessKit.create!(
-  name: 'Cardio Endurance Kit',
-  description: 'Boost your cardiovascular health. Includes jump rope, interval timer, and 30-day cardio challenge guide.'
+  name: 'SK-2',
+  description: '3lb db, light & medium resistance tube'
 )
 
 kit3 = PromiseFitnessKit.create!(
-  name: 'Flexibility & Recovery Kit',
-  description: 'Essential tools for mobility and recovery. Includes foam roller, stretching guide, and recovery protocols.'
+  name: 'SK-3',
+  description: '5lb db, medium & heavy resistance tube'
+)
+
+kit4 = PromiseFitnessKit.create!(
+  name: 'SK-4',
+  description: '10lb db, heavy & extra heavy resistance tube'
+)
+
+kit5 = PromiseFitnessKit.create!(
+  name: 'PK-1',
+  description: 'Pilates Ball & Fitness Towel'
+)
+
+kit6 = PromiseFitnessKit.create!(
+  name: 'WK-1',
+  description: '2 Walking/Trekking Sticks'
 )
 
 puts "Created #{PromiseFitnessKit.count} fitness kits"
@@ -29,7 +44,7 @@ puts "Created #{PromiseFitnessKit.count} fitness kits"
 # Create Coupon Codes
 puts "Creating coupon codes..."
 
-unused_codes = %w[WELCOME2024 FITNESS50 NEWYEAR SPRING25 HEALTH100]
+unused_codes = %w[TEST1 TEST2 TEST3]
 used_codes = %w[USED001 USED002 USED003 USED004 USED005]
 
 unused_codes.each do |code|
@@ -85,31 +100,6 @@ sample_orders = [
     zip: '98101',
     phone: '2065559012',
     email: 'michael.j@example.com'
-  },
-  {
-    promise_fitness_kit: kit1,
-    coupon_code: CouponCode.find_by(code: 'USED004'),
-    first_name: 'Sarah',
-    last_name: 'Williams',
-    address1: '321 Elm St',
-    city: 'Boston',
-    state: 'MA',
-    zip: '02134',
-    phone: '6175553456',
-    email: 'sarah.w@example.com'
-  },
-  {
-    promise_fitness_kit: kit2,
-    coupon_code: CouponCode.find_by(code: 'USED005'),
-    first_name: 'David',
-    last_name: 'Brown',
-    address1: '654 Maple Dr',
-    city: 'Denver',
-    state: 'CO',
-    zip: '80202',
-    phone: '7205557890',
-    email: 'david.brown@example.com',
-    description: 'Birthday gift - please include gift wrap'
   }
 ]
 
