@@ -20,7 +20,7 @@
 /* Order Page Layout */
 .order-layout {
     display: grid;
-    grid-template-columns: 350px 1fr;
+    grid-template-columns: 500px 1fr;
     gap: 2rem;
     margin-top: 1.5rem;
 }
@@ -35,15 +35,14 @@
 .kit-image-large {
     width: 100%;
     height: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-bottom: 1.5rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
 }
 
 .kit-details h2 {
     color: #2c3e50;
-    font-size: 1.5rem;
-    margin-bottom: 0.75rem;
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
 }
 
 .kit-details .kit-description {
@@ -174,7 +173,7 @@ legend {
 
 .form-row .field-small {
     grid-column: span 1;
-    max-width: 150px;
+    max-width: 200px;
 }
 
 /* Success Message (Order Show Page) */
