@@ -2,20 +2,20 @@ require "test_helper"
 
 class PromiseFitnessKitTest < ActiveSupport::TestCase
   test "should not save without name" do
-    kit = PromiseFitnessKit.new(description: "Test description")
+    kit = PromiseFitnessKit.new(description: "Test description", slug: "test-slug")
     assert_not kit.save, "Saved kit without name"
     assert_includes kit.errors[:name], "can't be blank"
   end
 
   test "should not save without description" do
-    kit = PromiseFitnessKit.new(name: "Test Kit")
+    kit = PromiseFitnessKit.new(name: "Test Kit", slug: "test-kit")
     assert_not kit.save, "Saved kit without description"
     assert_includes kit.errors[:description], "can't be blank"
   end
 
   test "should not save duplicate name" do
-    PromiseFitnessKit.create!(name: "Unique Kit", description: "Description")
-    kit = PromiseFitnessKit.new(name: "Unique Kit", description: "Another description")
+    PromiseFitnessKit.create!(name: "Unique Kit", description: "Description", slug: "unique-kit")
+    kit = PromiseFitnessKit.new(name: "Unique Kit", description: "Another description", slug: "unique-kit-2")
     assert_not kit.save, "Saved kit with duplicate name"
     assert_includes kit.errors[:name], "has already been taken"
   end
@@ -26,7 +26,7 @@ class PromiseFitnessKitTest < ActiveSupport::TestCase
   end
 
   test "should not delete kit with associated orders" do
-    kit = PromiseFitnessKit.create!(name: "Test Kit", description: "Description")
+    kit = PromiseFitnessKit.create!(name: "Test Kit", description: "Description", slug: "test-kit")
     coupon = CouponCode.create!(code: "TEST123", usage: "unused")
     Order.create!(
       promise_fitness_kit: kit,
@@ -46,9 +46,9 @@ class PromiseFitnessKitTest < ActiveSupport::TestCase
   end
 
   test "ordered_by_name scope returns kits alphabetically" do
-    PromiseFitnessKit.create!(name: "Zebra Kit", description: "Last")
-    PromiseFitnessKit.create!(name: "Alpha Kit", description: "First")
-    PromiseFitnessKit.create!(name: "Beta Kit", description: "Second")
+    PromiseFitnessKit.create!(name: "Zebra Kit", description: "Last", slug: "zebra-kit")
+    PromiseFitnessKit.create!(name: "Alpha Kit", description: "First", slug: "alpha-kit")
+    PromiseFitnessKit.create!(name: "Beta Kit", description: "Second", slug: "beta-kit")
 
     kits = PromiseFitnessKit.ordered_by_name
     assert_equal "Alpha Kit", kits.first.name
@@ -56,7 +56,43 @@ class PromiseFitnessKitTest < ActiveSupport::TestCase
   end
 
   test "to_s returns name" do
-    kit = PromiseFitnessKit.new(name: "Test Kit", description: "Description")
+    kit = PromiseFitnessKit.new(name: "Test Kit", description: "Description", slug: "test-kit")
     assert_equal "Test Kit", kit.to_s
+  end
+
+  test "should not save without slug" do
+    kit = PromiseFitnessKit.new(name: "Test Kit", description: "Test Description")
+    assert_not kit.save, "Saved kit without slug"
+    assert_includes kit.errors[:slug], "can't be blank"
+  end
+
+  test "should not save with duplicate slug" do
+    PromiseFitnessKit.create!(name: "Kit 1", description: "Desc 1", slug: "test-slug")
+    kit = PromiseFitnessKit.new(name: "Kit 2", description: "Desc 2", slug: "test-slug")
+    assert_not kit.save, "Saved kit with duplicate slug"
+    assert_includes kit.errors[:slug], "has already been taken"
+  end
+
+  test "should not save slug with uppercase letters" do
+    kit = PromiseFitnessKit.new(name: "Test", description: "Test", slug: "Test-Kit")
+    assert_not kit.save, "Saved kit with uppercase in slug"
+    assert_includes kit.errors[:slug], "must contain only lowercase letters, numbers, and hyphens"
+  end
+
+  test "should not save slug with spaces" do
+    kit = PromiseFitnessKit.new(name: "Test", description: "Test", slug: "test kit")
+    assert_not kit.save, "Saved kit with spaces in slug"
+    assert_includes kit.errors[:slug], "must contain only lowercase letters, numbers, and hyphens"
+  end
+
+  test "should not save slug with underscores" do
+    kit = PromiseFitnessKit.new(name: "Test", description: "Test", slug: "test_kit")
+    assert_not kit.save, "Saved kit with underscores in slug"
+    assert_includes kit.errors[:slug], "must contain only lowercase letters, numbers, and hyphens"
+  end
+
+  test "should save valid slug" do
+    kit = PromiseFitnessKit.new(name: "Test", description: "Test", slug: "test-kit-123")
+    assert kit.save, "Could not save kit with valid slug"
   end
 end

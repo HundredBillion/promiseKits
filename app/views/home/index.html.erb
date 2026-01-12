@@ -13,7 +13,7 @@
           <div class="kit-card-text">
             <h2><%= kit.name %></h2>
             <p class="kit-description"><%= kit.description %></p>
-            <%= link_to 'Order This Kit', new_promise_fitness_kit_order_path(kit), class: 'btn btn-primary' %>
+            <%= link_to 'Order This Kit', fitness_kit_order_path(slug: kit.slug), class: 'btn btn-primary' %>
           </div>
         </div>
       <% end %>

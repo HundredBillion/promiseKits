@@ -2,7 +2,7 @@ require "test_helper"
 
 class OrdersControllerTest < ActionDispatch::IntegrationTest
   def setup
-    @kit = PromiseFitnessKit.create!(name: "Test Kit", description: "Test Description")
+    @kit = PromiseFitnessKit.create!(name: "Test Kit", description: "Test Description", slug: "test-kit")
     @coupon = CouponCode.create!(code: "TEST123", usage: "unused")
     @used_coupon = CouponCode.create!(code: "USED123", usage: "used")
     @valid_params = {
@@ -22,51 +22,51 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
   # New Action Tests
   test "should get new" do
-    get new_promise_fitness_kit_order_url(@kit)
+    get fitness_kit_order_url(slug: @kit.slug)
     assert_response :success
   end
 
   test "should assign order and fitness kit" do
-    get new_promise_fitness_kit_order_url(@kit)
+    get fitness_kit_order_url(slug: @kit.slug)
     assert_not_nil assigns(:order)
     assert_not_nil assigns(:promise_fitness_kit)
     assert_equal @kit.id, assigns(:promise_fitness_kit).id
   end
 
-  test "should return 404 for invalid kit" do
-    assert_raises(ActiveRecord::RecordNotFound) do
-      get new_promise_fitness_kit_order_url(id: 99999)
-    end
+  test "should redirect to root for invalid kit" do
+    get fitness_kit_order_url(slug: "invalid-kit-slug")
+    assert_redirected_to root_path
+    assert_equal "Fitness kit not found", flash[:alert]
   end
 
   # Create Action - Success Tests
   test "should create order with valid params" do
     assert_difference('Order.count', 1) do
-      post promise_fitness_kit_orders_url(@kit), params: @valid_params
+      post create_fitness_kit_order_url(slug: @kit.slug), params: @valid_params
     end
   end
 
   test "should redirect to order show on success" do
-    post promise_fitness_kit_orders_url(@kit), params: @valid_params
+    post create_fitness_kit_order_url(slug: @kit.slug), params: @valid_params
     assert_redirected_to order_path(Order.last)
   end
 
   test "should mark coupon as used after order creation" do
     assert_equal "unused", @coupon.usage
-    post promise_fitness_kit_orders_url(@kit), params: @valid_params
+    post create_fitness_kit_order_url(slug: @kit.slug), params: @valid_params
     @coupon.reload
     assert_equal "used", @coupon.usage
   end
 
   test "should increment order confirmation number" do
     existing_order_count = Order.count
-    post promise_fitness_kit_orders_url(@kit), params: @valid_params
+    post create_fitness_kit_order_url(slug: @kit.slug), params: @valid_params
     order = Order.last
     assert_equal existing_order_count + 1, order.order_confirmation
   end
 
   test "should set success flash message" do
-    post promise_fitness_kit_orders_url(@kit), params: @valid_params
+    post create_fitness_kit_order_url(slug: @kit.slug), params: @valid_params
     assert_equal "Order placed successfully!", flash[:notice]
   end
 
@@ -76,7 +76,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     params[:order][:coupon_code_input] = "INVALID999"
 
     assert_no_difference('Order.count') do
-      post promise_fitness_kit_orders_url(@kit), params: params
+      post create_fitness_kit_order_url(slug: @kit.slug), params: params
     end
   end
 
@@ -84,7 +84,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     params = @valid_params.deep_dup
     params[:order][:coupon_code_input] = "INVALID999"
 
-    post promise_fitness_kit_orders_url(@kit), params: params
+    post create_fitness_kit_order_url(slug: @kit.slug), params: params
     assert_response :unprocessable_entity
     assert_template :new
     assert_equal "Invalid coupon code", flash[:error]
@@ -95,7 +95,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     params[:order][:coupon_code_input] = "USED123"
 
     assert_no_difference('Order.count') do
-      post promise_fitness_kit_orders_url(@kit), params: params
+      post create_fitness_kit_order_url(slug: @kit.slug), params: params
     end
   end
 
@@ -103,7 +103,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     params = @valid_params.deep_dup
     params[:order][:coupon_code_input] = "USED123"
 
-    post promise_fitness_kit_orders_url(@kit), params: params
+    post create_fitness_kit_order_url(slug: @kit.slug), params: params
     assert_response :unprocessable_entity
     assert_equal "This code has been used before and can no longer be used to place an order", flash[:error]
   end
@@ -114,7 +114,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     params[:order].delete(:email)
 
     assert_no_difference('Order.count') do
-      post promise_fitness_kit_orders_url(@kit), params: params
+      post create_fitness_kit_order_url(slug: @kit.slug), params: params
     end
   end
 
@@ -122,7 +122,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     params = @valid_params.deep_dup
     params[:order].delete(:first_name)
 
-    post promise_fitness_kit_orders_url(@kit), params: params
+    post create_fitness_kit_order_url(slug: @kit.slug), params: params
     assert_response :unprocessable_entity
     assert_template :new
     assert_not_nil assigns(:order).errors[:first_name]
@@ -132,7 +132,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     params = @valid_params.deep_dup
     params[:order].delete(:email)
 
-    post promise_fitness_kit_orders_url(@kit), params: params
+    post create_fitness_kit_order_url(slug: @kit.slug), params: params
     assert_response :unprocessable_entity
   end
 
@@ -140,7 +140,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     params = @valid_params.deep_dup
     params[:order].delete(:first_name)
 
-    post promise_fitness_kit_orders_url(@kit), params: params
+    post create_fitness_kit_order_url(slug: @kit.slug), params: params
     order = assigns(:order)
     assert_equal "Doe", order.last_name
     assert_equal "john@example.com", order.email

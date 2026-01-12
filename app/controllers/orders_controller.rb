@@ -42,7 +42,11 @@ class OrdersController < ApplicationController
   private
 
   def set_promise_fitness_kit
-    @promise_fitness_kit = PromiseFitnessKit.find(params[:promise_fitness_kit_id])
+    @promise_fitness_kit = PromiseFitnessKit.find_by(slug: params[:slug])
+
+    if @promise_fitness_kit.nil?
+      redirect_to root_path, alert: 'Fitness kit not found'
+    end
   end
 
   def order_params

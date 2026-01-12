@@ -11,32 +11,44 @@ puts "Creating fitness kits..."
 
 kit1 = PromiseFitnessKit.create!(
   name: 'SK-1',
-  description: '2lb db, xlight & light resistance tube'
+  description: '2lb db, xlight & light resistance tube',
+  slug: 'strength-kit-1'
 )
 
 kit2 = PromiseFitnessKit.create!(
   name: 'SK-2',
-  description: '3lb db, light & medium resistance tube'
-)
+  description: '3lb db, light & medium resistance tube',
+  slug: 'strength-kit-2'
+  )
 
 kit3 = PromiseFitnessKit.create!(
   name: 'SK-3',
-  description: '5lb db, medium & heavy resistance tube'
+  description: '5lb db, medium & heavy resistance tube',
+  slug: 'strength-kit-3'
 )
 
 kit4 = PromiseFitnessKit.create!(
   name: 'SK-4',
-  description: '10lb db, heavy & extra heavy resistance tube'
+  description: '10lb db, heavy & extra heavy resistance tube',
+  slug: 'strength-kit-4'
 )
 
 kit5 = PromiseFitnessKit.create!(
   name: 'PK-1',
-  description: 'Pilates Ball & Fitness Towel'
+  description: 'Pilates Ball & Fitness Towel',
+  slug: 'pilates-kit-1'
 )
 
 kit6 = PromiseFitnessKit.create!(
   name: 'WK-1',
-  description: '2 Walking/Trekking Sticks'
+  description: '2 Walking/Trekking Sticks',
+  slug: 'walking-trekking-1'
+)
+
+kit7 = PromiseFitnessKit.create!(
+  name: 'YK-1',
+  description: '2 Yoga Blocks 1 Yoga Strap',
+  slug: 'yoga-kit-1'
 )
 
 puts "Created #{PromiseFitnessKit.count} fitness kits"

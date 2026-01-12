@@ -14,7 +14,7 @@
     </div>
 
     <div class="form-container">
-      <%= form_with model: @order, url: promise_fitness_kit_orders_path(@promise_fitness_kit), data: { turbo: true }, html: { class: 'order-form' } do |f| %>
+      <%= form_with model: @order, url: create_fitness_kit_order_path(slug: @promise_fitness_kit.slug), data: { turbo: true }, html: { class: 'order-form' } do |f| %>
         <% if flash[:error] %>
           <div class="alert alert-error" role="alert">
             <%= flash[:error] %>

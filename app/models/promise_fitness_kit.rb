@@ -5,6 +5,12 @@ class PromiseFitnessKit < ApplicationRecord
   # Validations
   validates :name, presence: true, uniqueness: true
   validates :description, presence: true
+  validates :slug, presence: true,
+                   uniqueness: true,
+                   format: {
+                     with: /\A[a-z0-9-]+\z/,
+                     message: "must contain only lowercase letters, numbers, and hyphens"
+                   }
 
   # Scopes
   scope :ordered_by_name, -> { order(:name) }

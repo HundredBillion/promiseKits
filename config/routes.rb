@@ -1,4 +1,14 @@
+require_relative '../lib/constraints/fitness_kit_slug_constraint'
+
 Rails.application.routes.draw do
+  # Fitness kit order pages - only matches if slug exists in database
+  # These can now be ANYWHERE in the routes file thanks to the database constraint!
+  # Moved to the TOP to prove they don't need special positioning anymore!
+  get '/:slug', to: 'orders#new', as: :fitness_kit_order,
+                constraints: FitnessKitSlugConstraint
+  post '/:slug', to: 'orders#create', as: :create_fitness_kit_order,
+                 constraints: FitnessKitSlugConstraint
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
@@ -12,9 +22,6 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "home#index"
 
-  resources :promise_fitness_kits, only: [] do
-    resources :orders, only: [:new, :create]
-  end
-
+  # Order confirmation page
   resources :orders, only: [:show]
 end
