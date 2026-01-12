@@ -1,9 +1,6 @@
-require_relative '../lib/constraints/fitness_kit_slug_constraint'
-
 Rails.application.routes.draw do
   # Fitness kit order pages - only matches if slug exists in database
-  # These can now be ANYWHERE in the routes file thanks to the database constraint!
-  # Moved to the TOP to prove they don't need special positioning anymore!
+  # These routes use a custom constraint to check slug validity
   get '/:slug', to: 'orders#new', as: :fitness_kit_order,
                 constraints: FitnessKitSlugConstraint
   post '/:slug', to: 'orders#create', as: :create_fitness_kit_order,
