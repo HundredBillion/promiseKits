@@ -1,10 +1,16 @@
 Rails.application.routes.draw do
   # Fitness kit order pages - only matches if slug exists in database
-  # These routes use a custom constraint to check slug validity
+  # This allows me to create routes like promisekits.com/strength-kit-1
   get '/:slug', to: 'orders#new', as: :fitness_kit_order,
-                constraints: FitnessKitSlugConstraint
+    constraints: lambda { |request|
+      slug = request.path_parameters[:slug]
+      slug.present? && PromiseFitnessKit.exists?(slug: slug)
+    }
   post '/:slug', to: 'orders#create', as: :create_fitness_kit_order,
-                 constraints: FitnessKitSlugConstraint
+    constraints: lambda { |request|
+      slug = request.path_parameters[:slug]
+      slug.present? && PromiseFitnessKit.exists?(slug: slug)
+    }
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
