@@ -1,4 +1,4 @@
-require "test_helper"
+require_relative "test_helper"
 
 class PromiseFitnessKitTest < ActiveSupport::TestCase
   test "should not save without name" do

@@ -1,4 +1,4 @@
-require "test_helper"
+require_relative "test_helper"
 
 class CouponCodeTest < ActiveSupport::TestCase
   test "should not save without code" do

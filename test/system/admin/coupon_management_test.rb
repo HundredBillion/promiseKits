@@ -3,7 +3,7 @@ require "application_system_test_case"
 class Admin::CouponManagementTest < ApplicationSystemTestCase
   setup do
     Admin.destroy_all
-    @admin = Admin.create!(username: 'admin', password: 'password123', password_confirmation: 'password123')
+    @admin = Admin.create!(username: "admin", password: "password123", password_confirmation: "password123")
     # Clear existing coupons to have a clean state
     CouponCode.destroy_all
   end
