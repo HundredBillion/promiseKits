@@ -10,13 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_08_043803) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_22_032105) do
+  create_table "admins", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "password_digest", null: false
+    t.datetime "updated_at", null: false
+    t.string "username", null: false
+    t.index ["username"], name: "index_admins_on_username", unique: true
+  end
+
   create_table "coupon_codes", force: :cascade do |t|
     t.string "code", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "usage", default: "unused", null: false
     t.index ["code"], name: "index_coupon_codes_on_code", unique: true
+    t.index ["usage"], name: "index_coupon_codes_on_usage"
     t.check_constraint "usage IN ('unused', 'used')", name: "usage_check"
   end
 

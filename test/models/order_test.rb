@@ -2,8 +2,8 @@ require "test_helper"
 
 class OrderTest < ActiveSupport::TestCase
   def setup
-    @kit = PromiseFitnessKit.create!(name: "Test Kit", description: "Description")
-    @coupon = CouponCode.create!(code: "TEST123", usage: "unused")
+    @kit = PromiseFitnessKit.create!(name: "Test Kit", description: "Description", slug: "test-kit")
+    @coupon = CouponCode.create!(code: "SK1000AAA", usage: "unused")
     @valid_attributes = {
       promise_fitness_kit: @kit,
       coupon_code: @coupon,

@@ -22,6 +22,23 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
+  # Admin namespace
+  namespace :admin do
+    # Login/logout
+    get 'login', to: 'sessions#new'
+    post 'login', to: 'sessions#create'
+    delete 'logout', to: 'sessions#destroy'
+
+    # Dashboard
+    root to: 'dashboard#index', as: :dashboard
+
+    # Coupon Codes
+    resources :coupon_codes, only: [:index, :create, :destroy]
+  end
+
+  # Redirect /admin to /admin/dashboard or login
+  get 'admin', to: redirect('/admin')
+
   # Defines the root path route ("/")
   root "home#index"
 

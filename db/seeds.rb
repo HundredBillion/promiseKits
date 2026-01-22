@@ -4,7 +4,14 @@ if Rails.env.development?
   Order.destroy_all
   CouponCode.destroy_all
   PromiseFitnessKit.destroy_all
+  Admin.destroy_all
 end
+
+# Create Admin Users
+puts "Creating admin users..."
+Admin.create!(username: 'admin', password: 'password123', password_confirmation: 'password123')
+Admin.create!(username: 'testadmin', password: 'testpass', password_confirmation: 'testpass')
+puts "Created #{Admin.count} admin users"
 
 # Create Fitness Kits
 puts "Creating fitness kits..."
@@ -42,7 +49,7 @@ kit5 = PromiseFitnessKit.create!(
 kit6 = PromiseFitnessKit.create!(
   name: 'WK-1',
   description: '2 Walking/Trekking Sticks',
-  slug: 'walking-trekking-1'
+  slug: 'walking-trekking-kit-1'
 )
 
 kit7 = PromiseFitnessKit.create!(
@@ -54,20 +61,20 @@ kit7 = PromiseFitnessKit.create!(
 puts "Created #{PromiseFitnessKit.count} fitness kits"
 
 # Create Coupon Codes
-puts "Creating coupon codes..."
+puts "Creating coupon codes with new format..."
 
-unused_codes = %w[TEST1 TEST2 TEST3]
-used_codes = %w[USED001 USED002 USED003 USED004 USED005]
+codes = [
+  { code: 'SK1000AAA', usage: 'unused' },
+  { code: 'SK1001BBB', usage: 'unused' },
+  { code: 'SK1002CCC', usage: 'unused' },
+  { code: 'SK1003DDD', usage: 'unused' },
+  { code: 'SK1004EEE', usage: 'unused' },
+  { code: 'SK1005FFF', usage: 'unused' },
+  { code: 'SK1006GGG', usage: 'unused' },
+  { code: 'SK1007HHH', usage: 'unused' }
+]
 
-unused_codes.each do |code|
-  CouponCode.create!(code: code, usage: 'unused')
-end
-
-# Create coupons that will be used in sample orders as 'unused' first
-# They will be automatically marked as 'used' when orders are created
-used_codes.each do |code|
-  CouponCode.create!(code: code, usage: 'unused')
-end
+codes.each { |attrs| CouponCode.create!(attrs) }
 
 puts "Created #{CouponCode.count} coupon codes (#{CouponCode.unused.count} unused, #{CouponCode.used.count} used)"
 
@@ -77,7 +84,7 @@ puts "Creating sample orders..."
 sample_orders = [
   {
     promise_fitness_kit: kit1,
-    coupon_code: CouponCode.find_by(code: 'USED001'),
+    coupon_code: CouponCode.find_by(code: 'SK1003DDD'),
     first_name: 'John',
     last_name: 'Doe',
     address1: '123 Main St',
@@ -89,7 +96,7 @@ sample_orders = [
   },
   {
     promise_fitness_kit: kit2,
-    coupon_code: CouponCode.find_by(code: 'USED002'),
+    coupon_code: CouponCode.find_by(code: 'SK1004EEE'),
     first_name: 'Jane',
     last_name: 'Smith',
     address1: '456 Oak Ave',
@@ -103,7 +110,7 @@ sample_orders = [
   },
   {
     promise_fitness_kit: kit3,
-    coupon_code: CouponCode.find_by(code: 'USED003'),
+    coupon_code: CouponCode.find_by(code: 'SK1005FFF'),
     first_name: 'Michael',
     last_name: 'Johnson',
     address1: '789 Pine St',

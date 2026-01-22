@@ -27,7 +27,7 @@ class PromiseFitnessKitTest < ActiveSupport::TestCase
 
   test "should not delete kit with associated orders" do
     kit = PromiseFitnessKit.create!(name: "Test Kit", description: "Description", slug: "test-kit")
-    coupon = CouponCode.create!(code: "TEST123", usage: "unused")
+    coupon = CouponCode.create!(code: "SK1000AAA", usage: "unused")
     Order.create!(
       promise_fitness_kit: kit,
       coupon_code: coupon,

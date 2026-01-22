@@ -3,8 +3,8 @@ require "test_helper"
 class OrdersControllerTest < ActionDispatch::IntegrationTest
   def setup
     @kit = PromiseFitnessKit.create!(name: "Test Kit", description: "Test Description", slug: "test-kit")
-    @coupon = CouponCode.create!(code: "TEST123", usage: "unused")
-    @used_coupon = CouponCode.create!(code: "USED123", usage: "used")
+    @coupon = CouponCode.create!(code: "SK1000AAA", usage: "unused")
+    @used_coupon = CouponCode.create!(code: "SK1001BBB", usage: "used")
     @valid_params = {
       order: {
         first_name: "John",
@@ -15,7 +15,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
         zip: "94102",
         phone: "415-555-1234",
         email: "john@example.com",
-        coupon_code_input: "TEST123"
+        coupon_code_input: "SK1000AAA"
       }
     }
   end
