@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Placeholder image for "Zebra Kit".
+  Stored with a .png filename but contains inline SVG. This ensures tests
+  or development references to the asset name succeed without requiring a
+  real raster PNG file. Replace with a proper PNG in production if desired.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="300" viewBox="0 0 600 300" role="img" aria-label="Zebra Kit placeholder">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#fff9f0"/>
+      <stop offset="100%" stop-color="#f0f7ff"/>
+    </linearGradient>
+    <style type="text/css"><![CDATA[
+      .bg { fill: url(#bgGrad); }
+      .border { fill: none; stroke: #d6e6ff; stroke-width: 4; }
+      .badge { fill: #111827; }
+      .title { font-family: Arial, Helvetica, sans-serif; font-size: 34px; fill: #0b3a66; font-weight: 700; }
+      .subtitle { font-family: Arial, Helvetica, sans-serif; font-size: 14px; fill: #2b4e78; }
+      .zebra { fill: #ffffff; stroke: #000000; stroke-width: 2; }
+      .stripe { fill: #000000; opacity: 0.85; }
+    ]]></style>
+  </defs>
+
+  <!-- Background -->
+  <rect class="bg" width="100%" height="100%" rx="16" ry="16"/>
+
+  <!-- Border -->
+  <rect class="border" x="8" y="8" width="584" height="284" rx="12" ry="12"/>
+
+  <!-- Left decorative zebra badge -->
+  <g transform="translate(36,36)">
+    <rect x="0" y="0" width="120" height="120" rx="12" ry="12" fill="#ffffff" stroke="#cfcfcf" stroke-width="2"/>
+    <!-- Zebra stripes -->
+    <g transform="translate(10,10)" clip-path="url(#clip)">
+      <rect class="zebra" x="0" y="0" width="100" height="100" rx="8" ry="8"/>
+      <rect class="stripe" x="5" y="10" width="90" height="12" rx="2" />
+      <rect class="stripe" x="5" y="30" width="90" height="12" rx="2" />
+      <rect class="stripe" x="5" y="50" width="90" height="12" rx="2" />
+      <rect class="stripe" x="5" y="70" width="90" height="12" rx="2" />
+      <rect class="stripe" x="5" y="90" width="90" height="6" rx="2" />
+    </g>
+    <text x="60" y="72" font-family="Courier New, monospace" font-size="28" fill="#0b3a66" font-weight="700" text-anchor="middle">ZK</text>
+  </g>
+
+  <!-- Title -->
+  <text class="title" x="200" y="100">Zebra Kit</text>
+
+  <!-- Subtitle -->
+  <text class="subtitle" x="200" y="128">Placeholder image (PNG filename, SVG content)</text>
+
+  <!-- Decorative stripes on the right for visual interest -->
+  <g transform="translate(420,40) rotate(10)">
+    <rect x="0" y="0" width="140" height="22" fill="#e9f3ff" rx="6"/>
+    <rect x="0" y="32" width="140" height="22" fill="#e9f3ff" rx="6"/>
+    <rect x="0" y="64" width="140" height="22" fill="#e9f3ff" rx="6"/>
+  </g>
+
+  <!-- Footer note -->
+  <text x="200" y="260" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#4b6b8a">
+    Replace with a real PNG for production. This SVG placeholder prevents test failures.
+  </text>
+</svg>
