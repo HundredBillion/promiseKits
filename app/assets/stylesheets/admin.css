@@ -113,7 +113,7 @@
     }
 }
 
-/* Admin Login Page Styles */
+/* Admin Login Page Styles (unchanged, scoped) */
 .admin-login-container {
     display: flex;
     justify-content: center;
@@ -204,4 +204,225 @@
 .back-link:hover {
     color: #333;
     text-decoration: underline;
+}
+
+/* Coupon Codes Scoped Styles
+   These classes are intentionally scoped so they don't collide
+   with the global utility classes in the views (Tailwind classes).
+   Use the `admin-coupons-*` and `coupon-*` prefixes in markup when
+   applying these styles from the admin/coupon_codes views.
+*/
+
+.admin-coupons {
+    padding: 1.25rem;
+}
+
+/* Filters area (spacing consistent with other cards)
+   Targets both the specific class and the utility-class combo used in the view
+   (.admin-coupons-filters and .coupons-filters) so markup with either or both
+   class names will receive the spacing. */
+.admin-coupons-filters,
+.coupons-filters {
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(16, 24, 40, 0.06);
+    padding: 0.75rem;
+    margin-bottom: 1rem; /* match spacing used by other admin cards */
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Ensure the search form has vertical breathing room like other elements.
+   Adds top/bottom margin so the search input doesn't sit flush against surrounding
+   elements and feels visually consistent with the filter buttons area. */
+.search-form {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    width: 100%;
+    margin: 0.5rem 0; /* vertical spacing to match other card paddings */
+}
+
+/* Give the search input a little vertical margin so it lines up nicely on small screens */
+.search-input {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    min-width: 200px;
+    margin: 0.25rem 0; /* small top/bottom breathing room */
+}
+
+/* Make the search and clear buttons follow the same vertical rhythm */
+.search-btn,
+.btn-clear {
+    margin: 0.25rem 0;
+}
+
+/* Card wrapper for the list */
+.admin-coupons-card {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+    overflow: hidden;
+}
+
+/* Header row (labels) */
+.admin-coupons-header {
+    margin-bottom: 1rem;
+    display: grid;
+    /* Added a column for \"Created At\" between Status and Associated Order */
+    grid-template-columns: 1fr 120px 160px 180px 120px;
+    gap: 1rem;
+    background: #f8fafc;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #6b7280;
+    letter-spacing: 0.03em;
+    align-items: center;
+}
+
+/* Data rows */
+.coupon-row {
+    display: grid;
+    /* Updated grid to include Created At column (Code | Status | Created At | Associated Order | Actions) */
+    grid-template-columns: 1fr 120px 160px 180px 120px;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    align-items: center;
+    transition: background-color 0.12s ease;
+}
+
+.coupon-row:hover {
+    background: #fafafb;
+}
+
+/* Individual cells */
+.coupon-code {
+    font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+    font-weight: 600;
+    color: #111827;
+    font-size: 0.95rem;
+    word-break: break-all;
+}
+
+.coupon-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.coupon-status.unused {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.coupon-status.used {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+/* Created At cell */
+.coupon-created {
+    color: #6b7280;
+    font-size: 0.9rem;
+    /* use a monospace-light look for dates to align visually with codes */
+    font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+}
+
+/* Associated order cell */
+.coupon-order {
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+/* Action column */
+.coupon-action {
+    text-align: right;
+}
+
+.coupon-action .btn-delete {
+    color: #dc2626;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    padding: 0;
+    font-size: 0.95rem;
+}
+
+.coupon-action .btn-delete:hover {
+    color: #991b1b;
+    text-decoration: underline;
+}
+
+/* Empty / placeholder cell */
+.coupon-empty {
+    color: #9ca3af;
+}
+
+/* Pagination controls area (scoped) */
+.admin-coupons-footer {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Responsive adjustments: stack columns on small screens */
+@media (max-width: 768px) {
+    .admin-coupons {
+        padding: 0.75rem;
+    }
+
+    .admin-coupons-header {
+        display: none; /* header labels hidden on mobile for compact list */
+    }
+
+    .coupon-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        padding: 0.75rem;
+    }
+
+    .coupon-row > * {
+        width: 100%;
+    }
+
+    .coupon-code {
+        font-size: 1rem;
+    }
+
+    .coupon-status {
+        justify-content: flex-start;
+    }
+
+    .coupon-action {
+        text-align: left;
+    }
+
+    .coupon-order {
+        color: #6b7280;
+    }
+}
+
+/* Small visual helpers */
+.admin-coupons .badge {
+    display: inline-block;
+    padding: 0.2rem 0.4rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
 }
