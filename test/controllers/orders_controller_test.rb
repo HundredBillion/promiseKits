@@ -28,9 +28,11 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
   test "should assign order and fitness kit" do
     get fitness_kit_order_url(slug: @kit.slug)
-    assert_not_nil assigns(:order)
-    assert_not_nil assigns(:promise_fitness_kit)
-    assert_equal @kit.id, assigns(:promise_fitness_kit).id
+    assert_response :success
+    # Ensure the page includes the kit name and the order form (observable behavior)
+    assert_select 'h1', text: /You have selected:/i
+    assert_select 'h1', text: /#{@kit.name}/
+    assert_select 'form.order-form'
   end
 
   test "should redirect to root for invalid kit" do
@@ -86,8 +88,9 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
     post create_fitness_kit_order_url(slug: @kit.slug), params: params
     assert_response :unprocessable_entity
-    assert_template :new
-    assert_equal "Invalid coupon code", flash[:error]
+    # New was rendered with an error message shown in the page
+    assert_select 'div.alert-error', text: /Invalid coupon code/
+    assert_select 'form.order-form'
   end
 
   test "should not create order with used coupon" do
@@ -124,8 +127,9 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
     post create_fitness_kit_order_url(slug: @kit.slug), params: params
     assert_response :unprocessable_entity
-    assert_template :new
-    assert_not_nil assigns(:order).errors[:first_name]
+    # Expect the form to be re-rendered and validation error messages to appear
+    assert_select 'form.order-form'
+    assert_select 'div.alert-error', text: /first name/i
   end
 
   test "should return 422 for validation errors" do
@@ -141,9 +145,10 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     params[:order].delete(:first_name)
 
     post create_fitness_kit_order_url(slug: @kit.slug), params: params
-    order = assigns(:order)
-    assert_equal "Doe", order.last_name
-    assert_equal "john@example.com", order.email
+    assert_response :unprocessable_entity
+    # Ensure submitted values persist in the rendered form fields
+    assert_select 'input[name="order[last_name]"][value="Doe"]'
+    assert_select 'input[name="order[email]"][value="john@example.com"]'
   end
 
   # Show Action Tests
@@ -180,8 +185,10 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     )
 
     get order_url(order)
-    assert_not_nil assigns(:order)
-    assert_equal order.id, assigns(:order).id
+    assert_response :success
+    # Confirm the order is rendered by checking the confirmation number and kit name appear
+    assert_select 'strong', text: order.formatted_order_confirmation
+    assert_select 'strong', text: order.promise_fitness_kit.name
   end
 
   test "should return 404 for invalid order" do
