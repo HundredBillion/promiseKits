@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_22_032105) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_10_000000) do
   create_table "admins", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "password_digest", null: false
@@ -27,6 +27,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_22_032105) do
     t.index ["code"], name: "index_coupon_codes_on_code", unique: true
     t.index ["usage"], name: "index_coupon_codes_on_usage"
     t.check_constraint "usage IN ('unused', 'used')", name: "usage_check"
+  end
+
+  create_table "coupon_sequences", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "last_sequence", default: 999, null: false
+    t.string "name", default: "default", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_coupon_sequences_on_name", unique: true
   end
 
   create_table "orders", force: :cascade do |t|

@@ -1,7 +1,22 @@
 <div class="admin-coupons">
   <div class="admin-coupons-header coupons-header">
     <h1>Coupon Codes</h1>
-    <%= button_to "Create New Coupon", admin_coupon_codes_path, method: :post, class: "btn-create" %>
+    <div class="header-controls">
+      <%= form_with url: admin_coupon_codes_path, method: :post, data: { turbo: false }, class: "bulk-create-form", local: true do %>
+        <div class="bulk-create-controls">
+          <%= number_field_tag :count, params[:count] || 1, min: 1, class: "bulk-count-input" %>
+          <%= submit_tag "Create Coupons", class: "btn-create" %>
+        </div>
+      <% end %>
+
+      <%= form_with url: admin_coupon_sequence_path, method: :patch, local: true, class: 'sequence-form' do %>
+        <div class="sequence-controls">
+          <span>Next sequence will start at: <strong><%= CouponSequence.default.last_sequence + 1 %></strong></span>
+          <%= number_field_tag 'coupon_sequence[last_sequence]', CouponSequence.default.last_sequence, min: 0, class: 'sequence-input' %>
+          <%= submit_tag 'Set Sequence', class: 'btn-set-sequence' %>
+        </div>
+      <% end %>
+    </div>
   </div>
 
   <div class="admin-coupons-filters coupons-filters">

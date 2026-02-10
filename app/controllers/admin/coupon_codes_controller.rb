@@ -31,12 +31,36 @@ class Admin::CouponCodesController < Admin::BaseController
   end
 
   def create
+    # Bulk creation support using CouponSequence reservation.
+    # Accept `count` param (defaults to 1) and reserve a contiguous numeric range
+    # from the sequence row so concurrent requests receive non-overlapping ranges.
+    count = params[:count].to_i
+    count = 1 if count < 1
+
+    created_codes = []
+
     begin
-      code = CouponCode.generate_next_code
-      coupon = CouponCode.create!(code: code, usage: 'unused')
-      redirect_to admin_coupon_codes_path, notice: "Coupon code #{coupon.code} created successfully"
+      # Reserve the numeric range atomically. This returns the starting sequence number.
+      start_seq = CouponSequence.default.reserve_range!(count)
+
+      ActiveRecord::Base.transaction do
+        count.times do |i|
+          seq = start_seq + i
+          letters = 3.times.map { ('A'..'Z').to_a.sample }.join
+          code = "SK#{seq}#{letters}"
+          created_codes << CouponCode.create!(code: code, usage: 'unused')
+        end
+      end
+
+      if created_codes.size == 1
+        redirect_to admin_coupon_codes_path, notice: "Coupon code #{created_codes.first.code} created successfully"
+      else
+        redirect_to admin_coupon_codes_path, notice: "#{created_codes.size} coupon codes created successfully"
+      end
     rescue StandardError => e
-      redirect_to admin_coupon_codes_path, alert: "Error creating coupon code: #{e.message}"
+      # Surface any errors (reservation or creation). The reservation is atomic; if creation fails
+      # the sequence has already advanced — this is expected behavior for simplicity.
+      redirect_to admin_coupon_codes_path, alert: "Error creating coupon code(s): #{e.message}"
     end
   end
 

@@ -270,10 +270,10 @@
 }
 
 /* Header row (labels) */
-.admin-coupons-header {
+.admin-coupons-header.header-row {
     margin-bottom: 1rem;
     display: grid;
-    /* Added a column for \"Created At\" between Status and Associated Order */
+    /* Added a column for "Created At" between Status and Associated Order */
     grid-template-columns: 1fr 120px 160px 180px 120px;
     gap: 1rem;
     background: #f8fafc;
@@ -284,6 +284,35 @@
     color: #6b7280;
     letter-spacing: 0.03em;
     align-items: center;
+}
+
+/* Top header area for title + controls */
+.admin-coupons-header.coupons-header {
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: #f8fafc;
+    padding: 1rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Controls container to lay out forms horizontally */
+.header-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Make the forms align horizontally and center their internal fields */
+.bulk-create-form,
+.sequence-form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 /* Data rows */

@@ -33,6 +33,7 @@ Rails.application.routes.draw do
     root to: 'dashboard#index', as: :dashboard
 
     # Coupon Codes
+    resource :coupon_sequence, only: [:show, :update], controller: 'coupon_sequences'
     resources :coupon_codes, only: [:index, :create, :destroy]
   end
 
