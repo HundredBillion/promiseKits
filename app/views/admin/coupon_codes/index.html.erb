@@ -37,51 +37,61 @@
   </div>
 
   <div class="admin-coupons-card coupon-list">
-    <div class="admin-coupons-header header-row">
-      <div>Code</div>
-      <div>Status</div>
-      <div>Created At</div>
-      <div>Associated Order</div>
-      <div>Actions</div>
-    </div>
+    <table class="coupon-table" style="width:100%; border-collapse: collapse;">
+      <thead>
+        <tr class="admin-coupons-header header-row">
+          <th style="text-align:left; padding: 0.75rem 1rem;">Code</th>
+          <th style="text-align:left; padding: 0.75rem 1rem; width:120px;">Status</th>
+          <th style="text-align:left; padding: 0.75rem 1rem; width:160px;">Created At</th>
+          <th style="text-align:left; padding: 0.75rem 1rem; width:180px;">Associated Order</th>
+          <th style="text-align:right; padding: 0.75rem 1rem; width:120px;">Actions</th>
+        </tr>
+      </thead>
 
-    <% if @coupons.any? %>
-      <% @coupons.each do |coupon| %>
-        <div class="coupon-row">
-          <div class="coupon-code"><%= coupon.code %></div>
+      <tbody>
+        <% if @coupons.any? %>
+          <% @coupons.each do |coupon| %>
+            <tr class="coupon-row" style="border-bottom: 1px solid #e5e7eb;">
+              <td class="coupon-code" style="padding: 0.75rem 1rem; vertical-align: middle;">
+                <%= coupon.code %>
+              </td>
 
-          <div>
-            <% if coupon.unused? %>
-              <span class="coupon-status unused">Unused</span>
-            <% else %>
-              <span class="coupon-status used">Used</span>
-            <% end %>
-          </div>
+              <td style="padding: 0.75rem 1rem; vertical-align: middle;">
+                <% if coupon.unused? %>
+                  <span class="coupon-status unused">Unused</span>
+                <% else %>
+                  <span class="coupon-status used">Used</span>
+                <% end %>
+              </td>
 
-          <div class="coupon-created"><%= coupon.created_at.strftime("%Y-%m-%d %H:%M") %></div>
+              <td class="coupon-created" style="padding: 0.75rem 1rem; vertical-align: middle;">
+                <%= coupon.created_at.strftime("%Y-%m-%d %H:%M") %>
+              </td>
 
-          <div class="coupon-order">
-            <% if coupon.orders.any? %>
-              <%= link_to "Order ##{coupon.orders.first.id}", order_path(coupon.orders.first) %>
-            <% else %>
-              <span class="coupon-empty">—</span>
-            <% end %>
-          </div>
+              <td class="coupon-order" style="padding: 0.75rem 1rem; vertical-align: middle;">
+                <% if coupon.orders.any? %>
+                  <%= link_to "Order ##{coupon.orders.first.id}", order_path(coupon.orders.first) %>
+                <% else %>
+                  <span class="coupon-empty">—</span>
+                <% end %>
+              </td>
 
-          <div class="coupon-action">
-            <% if coupon.unused? && coupon.orders.empty? %>
-              <%= button_to "Delete", admin_coupon_code_path(coupon), method: :delete, class: "btn-delete", form: { data: { turbo_confirm: "Are you sure you want to delete this coupon code?" } } %>
-            <% else %>
-              <span class="coupon-empty">—</span>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
-    <% else %>
-      <div class="coupon-row">
-        <div class="coupon-empty">No coupon codes found.</div>
-      </div>
-    <% end %>
+              <td class="coupon-action" style="padding: 0.75rem 1rem; vertical-align: middle; text-align: right;">
+                <% if coupon.unused? && coupon.orders.empty? %>
+                  <%= button_to "Delete", admin_coupon_code_path(coupon), method: :delete, class: "btn-delete", form: { data: { turbo_confirm: "Are you sure you want to delete this coupon code?" } } %>
+                <% else %>
+                  <span class="coupon-empty">—</span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr class="coupon-row">
+            <td class="coupon-empty" colspan="5" style="padding: 0.75rem 1rem; text-align: left;">No coupon codes found.</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
   </div>
 
   <div class="admin-coupons-footer">

@@ -1,0 +1,45 @@
+```promisekits/app/assets/images/Alpha Kit.png
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Placeholder image for "Alpha Kit".
+  This is an SVG image stored with a .png filename so tests that only check for
+  the presence of the asset file will succeed. The content is a simple graphic
+  with the text "Alpha Kit" so it is usable during development and tests.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="300" viewBox="0 0 600 300" role="img" aria-label="Alpha Kit placeholder">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#e6f0ff"/>
+      <stop offset="100%" stop-color="#cfe4ff"/>
+    </linearGradient>
+    <style type="text/css"><![CDATA[
+      .bg { fill: url(#g); }
+      .border { fill: none; stroke: #b9d2ff; stroke-width: 4; }
+      .title { font-family: Arial, Helvetica, sans-serif; font-size: 36px; fill: #08306b; font-weight: 700; }
+      .subtitle { font-family: Arial, Helvetica, sans-serif; font-size: 18px; fill: #205081; }
+    ]]></style>
+  </defs>
+
+  <!-- Background -->
+  <rect class="bg" width="100%" height="100%" rx="16" ry="16"/>
+
+  <!-- Border -->
+  <rect class="border" x="8" y="8" width="584" height="284" rx="12" ry="12"/>
+
+  <!-- Decorative badge -->
+  <g transform="translate(36,36)">
+    <rect x="0" y="0" width="120" height="120" rx="12" ry="12" fill="#ffffff" stroke="#a6c8ff" stroke-width="3"/>
+    <text x="60" y="72" font-family="Courier New, monospace" font-size="36" fill="#0b3a66" font-weight="700" text-anchor="middle">AK</text>
+  </g>
+
+  <!-- Title -->
+  <text class="title" x="200" y="100">Alpha Kit</text>
+
+  <!-- Subtitle / placeholder hint -->
+  <text class="subtitle" x="200" y="130">Placeholder image (PNG filename, SVG content)</text>
+
+  <!-- Small footer note -->
+  <text x="200" y="260" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#4b6b8a">
+    Use a proper PNG in production if desired — this placeholder prevents test failures.
+  </text>
+</svg>

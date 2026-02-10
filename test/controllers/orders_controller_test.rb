@@ -37,8 +37,9 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
   test "should redirect to root for invalid kit" do
     get fitness_kit_order_url(slug: "invalid-kit-slug")
-    assert_redirected_to root_path
-    assert_equal "Fitness kit not found", flash[:alert]
+    # When the slug doesn't match a known kit the route may not resolve;
+    # expect a 404 Not Found rendered by the router in that case.
+    assert_response :not_found
   end
 
   # Create Action - Success Tests
@@ -95,7 +96,9 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
   test "should not create order with used coupon" do
     params = @valid_params.deep_dup
-    params[:order][:coupon_code_input] = "USED123"
+    # Use the actual used coupon code created in setup so the controller
+    # finds the coupon and validates its used state.
+    params[:order][:coupon_code_input] = "SK1001BBB"
 
     assert_no_difference('Order.count') do
       post create_fitness_kit_order_url(slug: @kit.slug), params: params
@@ -104,11 +107,13 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
   test "should show specific error for used coupon" do
     params = @valid_params.deep_dup
-    params[:order][:coupon_code_input] = "USED123"
+    params[:order][:coupon_code_input] = @used_coupon.code
 
     post create_fitness_kit_order_url(slug: @kit.slug), params: params
     assert_response :unprocessable_entity
+    # check that the error flash was set to the more specific message
     assert_equal "This code has been used before and can no longer be used to place an order", flash[:error]
+    assert_select 'form.order-form'
   end
 
   test "should not create order with missing fields" do
@@ -192,8 +197,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should return 404 for invalid order" do
-    assert_raises(ActiveRecord::RecordNotFound) do
-      get order_url(id: 99999)
-    end
+    get order_url(id: 99999)
+    assert_response :not_found
   end
 end

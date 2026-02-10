@@ -171,13 +171,13 @@ class OrderTest < ActiveSupport::TestCase
   end
 
   test "should increment order_confirmation sequentially" do
-    order1 = Order.create!(@valid_attributes)
+  order1 = Order.create!(@valid_attributes)
 
-    coupon2 = CouponCode.create!(code: "TEST456", usage: "unused")
-    order2 = Order.create!(@valid_attributes.merge(coupon_code: coupon2))
+  coupon2 = CouponCode.create!(code: "SK1002ABC", usage: "unused")
+  order2 = Order.create!(@valid_attributes.merge(coupon_code: coupon2))
 
-    assert_equal order1.order_confirmation + 1, order2.order_confirmation
-  end
+  assert_equal order1.order_confirmation + 1, order2.order_confirmation
+end
 
   # Coupon Validation Tests
   test "should validate coupon_code must be unused" do
@@ -186,7 +186,7 @@ class OrderTest < ActiveSupport::TestCase
   end
 
   test "should reject order with used coupon" do
-    used_coupon = CouponCode.create!(code: "USED123", usage: "used")
+    used_coupon = CouponCode.create!(code: "SK1003DEF", usage: "used")
     order = Order.new(@valid_attributes.merge(coupon_code: used_coupon))
     assert_not order.valid?, "Order with used coupon was accepted"
     assert_includes order.errors[:coupon_code], "has already been used"
@@ -259,7 +259,7 @@ class OrderTest < ActiveSupport::TestCase
   test "recent scope returns orders in reverse chronological order" do
     order1 = Order.create!(@valid_attributes)
 
-    coupon2 = CouponCode.create!(code: "TEST789", usage: "unused")
+    coupon2 = CouponCode.create!(code: "SK1004GHI", usage: "unused")
     order2 = Order.create!(@valid_attributes.merge(coupon_code: coupon2))
 
     recent_orders = Order.recent
