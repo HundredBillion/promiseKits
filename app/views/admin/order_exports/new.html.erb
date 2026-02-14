@@ -1,0 +1,56 @@
+<div class="admin-coupons">
+  <div class="admin-coupons-header coupons-header">
+    <h1>Order Export</h1>
+    <div class="header-controls">
+      <p style="margin:0;">
+        Use this form to request an ad-hoc export of orders. The export will be built
+        into an Excel (.xlsx) file and emailed to the recipient specified below.
+      </p>
+    </div>
+  </div>
+
+  <div class="admin-coupons-filters coupons-filters" style="margin-bottom:1rem;">
+    <% if @last_export.present? %>
+      <div style="display:flex; flex-direction:column; gap:0.25rem;">
+        <strong>Last successful export</strong>
+        <span>
+          Export ID: <%= @last_export.id %>,
+          exported_at: <%= @last_export.updated_at.in_time_zone(OrderExport::Config.timezone).strftime('%Y-%m-%d %H:%M %Z') %>,
+          orders exported: <%= @last_export.reserved_count %>
+        </span>
+      </div>
+    <% else %>
+      <div class="coupon-empty">No previous successful exports found.</div>
+    <% end %>
+  </div>
+
+  <div class="admin-coupons-card coupon-list" style="padding:1rem;">
+    <%= form_with url: admin_order_exports_path, method: :post, local: true do %>
+      <div class="form-row" style="display:flex; flex-direction:column; gap:0.5rem; max-width:520px;">
+        <label for="order_export_ends_at">Ends at (America/New_York)</label>
+        <% default_local = (@default_scheduled_local || Time.current.in_time_zone(OrderExport::Config.timezone)) %>
+        <%= datetime_field_tag 'order_export[ends_at]', default_local.strftime('%Y-%m-%dT%H:%M'), id: 'order_export_ends_at', class: 'sequence-input' %>
+        <small class="coupon-empty">The export will include orders with created_at &gt; last export end and &le; this time. Time should be local to <strong><%= OrderExport::Config.timezone %></strong>.</small>
+      </div>
+
+      <div class="form-row" style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.75rem; max-width:520px;">
+        <label for="order_export_recipient">Recipient Email</label>
+        <%= text_field_tag 'order_export[recipient]', (@default_recipient || OrderExport::Config.recipient_email), id: 'order_export_recipient', class: 'bulk-count-input' %>
+        <small class="coupon-empty">Recipient for this export. If blank, the system default will be used.</small>
+      </div>
+
+      <div class="form-actions" style="margin-top:1rem; display:flex; gap:0.5rem; align-items:center;">
+        <%= submit_tag 'Export Now', class: 'btn-create' %>
+        <%= submit_tag 'Since last export', class: 'btn-set-sequence' %>
+
+        <span style="margin-left:1rem; color:#6b7280; font-size:0.95rem;">
+          Note: Scheduled exports run Mon/Wed/Fri at 7:00 AM <%= OrderExport::Config.timezone %>.
+        </span>
+      </div>
+    <% end %>
+  </div>
+
+  <div style="margin-top: 1rem;">
+    <%= link_to 'Back to Admin', admin_dashboard_path, class: 'btn-clear' %>
+  </div>
+</div>

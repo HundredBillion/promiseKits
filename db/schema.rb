@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_10_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_13_000001) do
   create_table "admins", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "password_digest", null: false
@@ -68,6 +68,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_10_000000) do
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_promise_fitness_kits_on_name", unique: true
     t.index ["slug"], name: "index_promise_fitness_kits_on_slug", unique: true
+  end
+
+  create_table "sequences", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.integer "last_value", default: 0, null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_sequences_on_name", unique: true
   end
 
   add_foreign_key "orders", "coupon_codes"

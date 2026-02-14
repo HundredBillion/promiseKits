@@ -34,6 +34,7 @@ Rails.application.routes.draw do
 
     # Coupon Codes
     resource :coupon_sequence, only: [:show, :update], controller: 'coupon_sequences'
+    resource :order_sequence, only: [:show, :update], controller: 'order_sequences'
     resources :coupon_codes, only: [:index, :create, :destroy]
   end
 

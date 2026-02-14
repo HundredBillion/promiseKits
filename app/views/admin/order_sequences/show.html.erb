@@ -1,0 +1,56 @@
+<div class="admin-coupons">
+  <div class="admin-coupons-header coupons-header">
+    <h1>Order Confirmation Sequence</h1>
+    <div class="header-controls">
+      <div class="sequence-overview" style="display:flex; flex-direction:column; gap:0.5rem;">
+        <% if flash[:notice] %>
+          <div class="alert alert-success"><%= flash[:notice] %></div>
+        <% elsif flash[:alert] %>
+          <div class="alert alert-error"><%= flash[:alert] %></div>
+        <% end %>
+
+        <div class="sequence-summary" style="display:flex; align-items:center; gap:1rem;">
+          <span>Current last value:</span>
+          <strong style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace;">
+            <%= @sequence.last_value %>
+          </strong>
+
+          <span style="margin-left: 0.75rem;">Next confirmation will be:</span>
+          <strong class="coupon-created" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace;">
+            <%= @sequence.last_value.to_i + 1 %>
+          </strong>
+        </div>
+      </div>
+
+      <%= form_with url: admin_order_sequence_path, method: :patch, local: true, class: 'sequence-form' do %>
+        <div class="sequence-controls" style="display:flex; align-items:center; gap:0.5rem; margin-left:1rem;">
+          <label for="order_sequence_last_value" style="margin-right:0.25rem;">Set last value</label>
+          <%= number_field_tag 'order_sequence[last_value]', @sequence.last_value, min: 0, id: 'order_sequence_last_value', class: 'sequence-input' %>
+          <%= submit_tag 'Set Sequence', class: 'btn-set-sequence' %>
+        </div>
+      <% end %>
+
+      <div style="margin-left:1rem;">
+        <%= link_to 'Back to Admin', admin_dashboard_path, class: 'btn-clear' %>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 1rem; background:#fff; padding:1rem; border-radius:8px; box-shadow: 0 1px 4px rgba(16,24,40,0.06);">
+    <h2 style="margin-top:0; margin-bottom:0.5rem;">About this sequence</h2>
+    <p style="margin:0; color:#374151;">
+      This sequence controls the numeric values used for order confirmation numbers.
+      Setting the <em>last value</em> will make the next reserved confirmation number equal to <strong>last_value + 1</strong>.
+      Use this to skip ranges or start a new generation of confirmation numbers.
+    </p>
+
+    <hr style="margin:0.75rem 0; border:none; border-top:1px solid #eee;">
+
+    <p style="margin:0; color:#6b7280; font-size:0.95rem;">
+      Implementation notes:
+      - Setting this value is atomic and safe for SQLite; the application reserves values inside a transaction.
+      - The DB still enforces uniqueness on the orders.order_confirmation column as a final guard.
+      - Consider using this sparingly — skipping large ranges is permanent unless you set the value again.
+    </p>
+  </div>
+</div>

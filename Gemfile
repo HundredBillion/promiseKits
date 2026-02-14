@@ -23,6 +23,13 @@ gem "bcrypt", "~> 3.1.7"
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
+# Excel generation for .xlsx exports (caxlsx is the maintained fork of axlsx)
+gem "caxlsx"
+
+# Background processing with Sidekiq (used in production) and scheduler for cron-like recurring jobs
+gem "sidekiq"
+gem "sidekiq-scheduler"
+
 # Use the database-backed adapters for Rails.cache, Active Job, and Action Cable
 gem "solid_cache"
 gem "solid_queue"
@@ -34,7 +41,7 @@ gem "bootsnap", require: false
 # Deploy this application anywhere as a Docker container [https://kamal-deploy.org]
 gem "kamal", require: false
 
-# Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
+# Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/"]
 gem "thruster", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
@@ -50,8 +57,11 @@ group :development, :test do
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem "brakeman", require: false
 
-  # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
+  # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/"]
   gem "rubocop-rails-omakase", require: false
+
+  # RSpec for testing (development & test groups)
+  gem "rspec-rails"
 end
 
 group :development do

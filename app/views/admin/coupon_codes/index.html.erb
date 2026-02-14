@@ -4,8 +4,8 @@
     <div class="header-controls">
       <%= form_with url: admin_coupon_codes_path, method: :post, data: { turbo: false }, class: "bulk-create-form", local: true do %>
         <div class="bulk-create-controls">
-          <%= number_field_tag :count, params[:count] || 1, min: 1, class: "bulk-count-input" %>
-          <%= submit_tag "Create Coupons", class: "btn-create" %>
+          <%= number_field_tag :count, params[:count].presence, min: 1, placeholder: "How many coupons to create?", class: "bulk-count-input" %>
+          <%= submit_tag "Create", class: "btn-create" %>
         </div>
       <% end %>
 

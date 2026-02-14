@@ -255,10 +255,24 @@
     margin: 0.25rem 0; /* small top/bottom breathing room */
 }
 
-/* Make the search and clear buttons follow the same vertical rhythm */
+/* Make the search and clear buttons follow the same vertical rhythm
+   and add consistent padding so text doesn't fill the entire button area */
 .search-btn,
-.btn-clear {
+.btn-clear,
+.btn-create,
+.btn-set-sequence {
     margin: 0.25rem 0;
+    padding: 0.45rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #111827;
+    cursor: pointer;
+    font-weight: 600;
+    line-height: 1;
+    box-sizing: border-box;
+    /* Keep a small minimum width so short buttons remain tappable on mobile */
+    min-width: 64px;
 }
 
 /* Card wrapper for the list */
@@ -313,6 +327,35 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+/* Make the bulk count input wider so long placeholder text can fit */
+.bulk-count-input {
+    /* Provide a comfortable minimum width and a sane maximum so it behaves responsively */
+    min-width: 280px;
+    max-width: 420px;
+
+    /* Match visual styling of other inputs */
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.95rem;
+
+    /* Ensure the placeholder text is readable on narrow devices by allowing shrinking,
+       but prefer the min-width above. */
+    box-sizing: border-box;
+}
+
+/* Make the sequence input compact so both forms can sit on one row */
+.sequence-input {
+    min-width: 100px;
+    max-width: 140px;
+    width: 120px;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    box-sizing: border-box;
 }
 
 /* Data rows */

@@ -69,7 +69,11 @@ class Order < ApplicationRecord
   end
 
   def generate_order_confirmation
-    self.order_confirmation = self.class.next_confirmation_number
+    # Use the Sequence model to atomically reserve a unique confirmation number.
+    # This avoids races that can happen when using MAX(:order_confirmation).
+    seq = Sequence.for('order_confirmation')
+    start_val = seq.reserve_range!(1)
+    self.order_confirmation = start_val
   end
 
   def coupon_code_must_be_unused
