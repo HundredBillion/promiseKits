@@ -2,14 +2,15 @@ require 'test_helper'
 
 class OrderExportBuilderTest < ActiveSupport::TestCase
   setup do
-    # Create minimal related records used by Order
+    # create related records for orders
     @kit = PromiseFitnessKit.create!(name: 'Test Kit', description: 'desc', slug: 'test-kit')
-    @coupon = CouponCode.create!(code: 'TESTCOUPON', usage: 'unused')
+    # Use distinct coupons per order to avoid 'already been used' validation during order creation callbacks
+    @coupon1 = CouponCode.create!(code: CouponCode.generate_next_code, usage: 'unused')
+    @coupon2 = CouponCode.create!(code: CouponCode.generate_next_code, usage: 'unused')
 
-    # Create a couple of orders. The app's callbacks should populate confirmation numbers.
     @order1 = Order.create!(
       promise_fitness_kit: @kit,
-      coupon_code: @coupon,
+      coupon_code: @coupon1,
       first_name: 'Alice',
       last_name: 'Smith',
       address1: '1 Test St',
@@ -22,7 +23,7 @@ class OrderExportBuilderTest < ActiveSupport::TestCase
 
     @order2 = Order.create!(
       promise_fitness_kit: @kit,
-      coupon_code: @coupon,
+      coupon_code: @coupon2,
       first_name: 'Bob',
       last_name: 'Jones',
       address1: '2 Test Ave',
