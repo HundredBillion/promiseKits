@@ -96,18 +96,3 @@ class OrderExport < ApplicationRecord
     update!(status: 'failed', error_message: error_message.to_s)
   end
 end
-
-# Model: ExportedOrder
-#
-# Join table linking an Order to the OrderExport run that exported it.
-# A DB-level unique index on order_id ensures an Order can only be exported
-# once (unless an admin manually changes the exported_orders table).
-#
-class ExportedOrder < ApplicationRecord
-  belongs_to :order_export
-  belongs_to :order
-
-  validates :order_export, presence: true
-  validates :order, presence: true
-  validates :order_id, uniqueness: true
-end
