@@ -102,7 +102,7 @@ module OrderExport
         order.first_name,
         order.last_name,
         order.email,
-        order.formatted_phone rescue order.phone,
+        (order.respond_to?(:formatted_phone) ? order.formatted_phone : order.phone),
         order.address1,
         order.address2,
         order.city,
