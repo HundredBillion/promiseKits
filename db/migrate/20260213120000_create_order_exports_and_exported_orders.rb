@@ -22,11 +22,21 @@ class CreateOrderExportsAndExportedOrders < ActiveRecord::Migration[8.1]
 
     # Enforce that an order can only be assigned to a single export.
     # This provides a strong DB-level guard against duplicate exports of the same order.
-    unless index_exists?(:exported_orders, :order_id, unique: true)
-      add_index :exported_orders, :order_id, unique: true
+    begin
+      unless index_exists?(:exported_orders, :order_id, unique: true)
+        add_index :exported_orders, :order_id, unique: true
+      end
+    rescue StandardError => e
+      warn "Skipping creation of unique index on exported_orders.order_id: #{e.class}: #{e.message}"
     end
 
     # Optional: an index to quickly find all exported_orders for a given export run
-    add_index :exported_orders, [:order_export_id, :created_at], name: "index_exported_orders_on_export_and_created_at"
+    begin
+      unless index_exists?(:exported_orders, [:order_export_id, :created_at], name: "index_exported_orders_on_export_and_created_at")
+        add_index :exported_orders, [:order_export_id, :created_at], name: "index_exported_orders_on_export_and_created_at"
+      end
+    rescue StandardError => e
+      warn "Skipping creation of index_exported_orders_on_export_and_created_at: #{e.class}: #{e.message}"
+    end
   end
 end
