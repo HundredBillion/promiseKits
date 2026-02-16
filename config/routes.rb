@@ -36,6 +36,10 @@ Rails.application.routes.draw do
     resource :coupon_sequence, only: [:show, :update], controller: 'coupon_sequences'
     resource :order_sequence, only: [:show, :update], controller: 'order_sequences'
     resources :coupon_codes, only: [:index, :create, :destroy]
+
+    # Ad-hoc Order Exports UI (GET new + POST create)
+    # Provides admin form to request immediate exports and enqueue the export job.
+    resource :order_exports, only: [:new, :create], controller: 'admin/order_exports'
   end
 
   # Redirect /admin to /admin/dashboard or login

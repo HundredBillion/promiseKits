@@ -60,7 +60,10 @@ class Admin::SendOrderExportJob < ApplicationJob
       Rails.logger.info("[Admin::SendOrderExportJob] export_id=#{export.id} succeeded; emailed to #{recipient}")
 
     rescue => e
-      Rails.logger.error("[Admin::SendOrderExportJob] export_id=#{export&.id} failed: #{e.class}: #{e.message}\n#{Array(e.backtrace).join(\"\\n\")}")
+      # Simplified logging to avoid complex interpolation/escaping that can confuse static parsers.
+      Rails.logger.error("[Admin::SendOrderExportJob] export_id=#{export&.id} failed: #{e.class}: #{e.message}")
+      Rails.logger.error(Array(e.backtrace).join("\n"))
+
       begin
         export.mark_failed!(e.message) if export
       rescue => mark_err

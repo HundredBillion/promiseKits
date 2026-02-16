@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_13_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_14_120000) do
   create_table "admins", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "password_digest", null: false
@@ -35,6 +35,30 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_13_000001) do
     t.string "name", default: "default", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_coupon_sequences_on_name", unique: true
+  end
+
+  create_table "exported_orders", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "order_export_id", null: false
+    t.integer "order_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["order_export_id", "created_at"], name: "index_exported_orders_on_export_and_created_at"
+    t.index ["order_export_id"], name: "index_exported_orders_on_order_export_id"
+    t.index ["order_id"], name: "index_exported_orders_on_order_id_unique", unique: true
+  end
+
+  create_table "order_exports", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "ends_at"
+    t.text "error_message"
+    t.string "filename"
+    t.string "recipient"
+    t.datetime "scheduled_for"
+    t.datetime "started_at"
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["scheduled_for"], name: "index_order_exports_on_scheduled_for"
+    t.index ["status"], name: "index_order_exports_on_status"
   end
 
   create_table "orders", force: :cascade do |t|
@@ -79,6 +103,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_13_000001) do
     t.index ["name"], name: "index_sequences_on_name", unique: true
   end
 
+  add_foreign_key "exported_orders", "order_exports"
+  add_foreign_key "exported_orders", "orders"
   add_foreign_key "orders", "coupon_codes"
   add_foreign_key "orders", "promise_fitness_kits"
 end

@@ -58,21 +58,46 @@ class OrderExport < ApplicationRecord
     scope = scope.where('created_at <= ?', ends_at)
     order_ids = scope.order(:created_at).pluck(:id)
 
-    # Mark this export as running and set ends_at / started_at inside the transaction.
+    # Prepare for reservation
     reserved_ids = []
+
+    # Use DB-optimized bulk insert on Postgres, fall back to batched per-row inserts otherwise.
     self.transaction do
       update!(status: 'running', started_at: Time.current.utc, ends_at: ends_at)
 
-      # Insert ExportedOrder rows. We handle uniqueness violations gracefully,
-      # because another concurrent worker may have exported some of these orders.
-      order_ids.each do |oid|
-        begin
-          ExportedOrder.create!(order_export_id: id, order_id: oid)
-          reserved_ids << oid
-        rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
-          # Skip orders that were reserved by a concurrent transaction.
-          # They are not part of this export.
-          next
+      conn = ActiveRecord::Base.connection
+      adapter = conn.adapter_name.to_s.downcase
+
+      if adapter.include?('post') && order_ids.any?
+        # Postgres: bulk insert with ON CONFLICT DO NOTHING for efficiency and concurrency-safety.
+        # Build a VALUES list safely by quoting each element.
+        now_sql = conn.quote(Time.current.utc)
+        values_sql = order_ids.map do |oid|
+          "(#{conn.quote(id)}, #{conn.quote(oid)}, #{now_sql}, #{now_sql})"
+        end.join(", ")
+
+        sql = <<~SQL.squish
+          INSERT INTO exported_orders (order_export_id, order_id, created_at, updated_at)
+          VALUES #{values_sql}
+          ON CONFLICT (order_id) DO NOTHING
+        SQL
+
+        conn.execute(sql)
+
+        # Determine which ids were successfully reserved for this export.
+        reserved_ids = ExportedOrder.where(order_export_id: id, order_id: order_ids).pluck(:order_id)
+      else
+        # Non-Postgres or fallback: perform batched per-row creates and gracefully handle uniqueness conflicts.
+        order_ids.each_slice(500) do |batch|
+          batch.each do |oid|
+            begin
+              ExportedOrder.create!(order_export_id: id, order_id: oid)
+              reserved_ids << oid
+            rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
+              # Skip orders reserved concurrently or invalid entries.
+              next
+            end
+          end
         end
       end
     end
@@ -95,19 +120,4 @@ class OrderExport < ApplicationRecord
   def mark_failed!(error_message = nil)
     update!(status: 'failed', error_message: error_message.to_s)
   end
-end
-
-# Model: ExportedOrder
-#
-# Join table linking an Order to the OrderExport run that exported it.
-# A DB-level unique index on order_id ensures an Order can only be exported
-# once (unless an admin manually changes the exported_orders table).
-#
-class ExportedOrder < ApplicationRecord
-  belongs_to :order_export
-  belongs_to :order
-
-  validates :order_export, presence: true
-  validates :order, presence: true
-  validates :order_id, uniqueness: true
 end
