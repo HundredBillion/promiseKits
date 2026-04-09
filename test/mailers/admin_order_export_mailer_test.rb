@@ -6,7 +6,7 @@ class Admin::OrderExportMailerTest < ActionMailer::TestCase
     ActionMailer::Base.deliveries.clear
 
     # Minimal supporting records for an OrderExport context
-    @export = OrderExport.create!(
+    @export = ::OrderExport.create!(
       status: "pending",
       scheduled_for: Time.current.utc,
       recipient: "ops@example.com"
@@ -14,7 +14,7 @@ class Admin::OrderExportMailerTest < ActionMailer::TestCase
   end
 
   test "export_email attaches xlsx file and composes subject/body correctly" do
-    tmp = Tempfile.new(["orders_export_test", ".xlsx"])
+    tmp = Tempfile.new([ "orders_export_test", ".xlsx" ])
     begin
       tmp.binmode
       tmp.write("xlsx-binary-placeholder")

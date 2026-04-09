@@ -1,0 +1,11 @@
+# Sidekiq configuration
+# Queues are processed in priority order (top = highest priority)
+
+:concurrency: 5
+
+:queues:
+  - default
+  - mailers
+
+:schedule:
+  config/sidekiq_scheduler.yml

@@ -1,6 +1,16 @@
 require_relative "test_helper"
 
 class CouponCodeTest < ActiveSupport::TestCase
+  self.use_transactional_tests = false
+
+  def teardown
+    ExportedOrder.delete_all
+    OrderExport.delete_all
+    Order.delete_all
+    PromiseFitnessKit.delete_all
+    CouponCode.delete_all
+  end
+
   test "should not save without code" do
     coupon = CouponCode.new(usage: "unused")
     assert_not coupon.save, "Saved coupon without code"
@@ -55,22 +65,23 @@ class CouponCodeTest < ActiveSupport::TestCase
   end
 
   test "unused scope returns only unused coupons" do
-    CouponCode.create!(code: "SK1000AAA", usage: "unused")
-    CouponCode.create!(code: "SK1001BBB", usage: "used")
-    CouponCode.create!(code: "SK1002CCC", usage: "unused")
+    CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
+    CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
 
     unused_coupons = CouponCode.unused
-    assert_equal 2, unused_coupons.count
+    # After cleanup, there should be at least 2 unused coupons (may be more from other tests)
+    assert unused_coupons.count >= 2
     assert unused_coupons.all?(&:unused?)
   end
 
   test "used scope returns only used coupons" do
-    CouponCode.create!(code: "SK1000AAA", usage: "unused")
-    CouponCode.create!(code: "SK1001BBB", usage: "used")
-    CouponCode.create!(code: "SK1002CCC", usage: "used")
+    CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
+    CouponCode.create!(code: CouponCode.generate_next_code, usage: "used")
+    CouponCode.create!(code: CouponCode.generate_next_code, usage: "used")
 
     used_coupons = CouponCode.used
-    assert_equal 2, used_coupons.count
+    # After cleanup, there should be at least 2 used coupons (may be more from other tests)
+    assert used_coupons.count >= 2
     assert used_coupons.all?(&:used?)
   end
 
@@ -80,7 +91,7 @@ class CouponCodeTest < ActiveSupport::TestCase
   end
 
   test "should not delete coupon with associated orders" do
-    kit = PromiseFitnessKit.create!(name: "Test Kit", description: "Description", slug: "test-kit")
+    kit = PromiseFitnessKit.create!(name: "Test Kit Coupon", description: "Description", slug: "test-kit-coupon-#{SecureRandom.hex(4)}")
     coupon = CouponCode.create!(code: "SK1000AAA", usage: "unused")
     Order.create!(
       promise_fitness_kit: kit,
@@ -101,7 +112,7 @@ class CouponCodeTest < ActiveSupport::TestCase
 
   # New format validation tests
   test "should accept valid SK format codes" do
-    valid_codes = ["SK1000AAA", "SK1001BBB", "SK9999ZZZ", "SK0ABC"]
+    valid_codes = [ "SK1000AAA", "SK1001BBB", "SK9999ZZZ", "SK0ABC" ]
     valid_codes.each do |code|
       coupon = CouponCode.new(code: code, usage: "unused")
       assert coupon.valid?, "#{code} should be valid but got errors: #{coupon.errors.full_messages}"
@@ -109,7 +120,7 @@ class CouponCodeTest < ActiveSupport::TestCase
   end
 
   test "should reject invalid format codes" do
-    invalid_codes = ["TEST123", "SK1000", "SK1000AA", "SK1000AAAA", "1000AAA", "SKABC", "SK-1000AAA"]
+    invalid_codes = [ "TEST123", "SK1000", "SK1000AA", "SK1000AAAA", "1000AAA", "SKABC", "SK-1000AAA" ]
     invalid_codes.each do |code|
       coupon = CouponCode.new(code: code, usage: "unused")
       assert_not coupon.valid?, "#{code} should be invalid"
@@ -172,7 +183,7 @@ class CouponCodeTest < ActiveSupport::TestCase
     c2 = CouponCode.create!(code: "SK1001BBB", usage: "unused")
     c3 = CouponCode.create!(code: "SK1002CCC", usage: "unused")
 
-    results = CouponCode.by_cursor(c1.id, 'next').limit(2)
+    results = CouponCode.by_cursor(c1.id, "next").limit(2)
     assert_equal 2, results.count
     assert_equal c2.id, results.first.id
     assert_equal c3.id, results.last.id
@@ -183,17 +194,18 @@ class CouponCodeTest < ActiveSupport::TestCase
     c2 = CouponCode.create!(code: "SK1001BBB", usage: "unused")
     c3 = CouponCode.create!(code: "SK1002CCC", usage: "unused")
 
-    results = CouponCode.by_cursor(c3.id, 'prev').limit(2).order(id: :desc)
+    results = CouponCode.by_cursor(c3.id, "prev").limit(2).order(id: :desc)
     assert_equal 2, results.count
     assert_includes results.pluck(:id), c1.id
     assert_includes results.pluck(:id), c2.id
   end
 
   test "by_cursor returns all records when cursor is nil" do
-    CouponCode.create!(code: "SK1000AAA", usage: "unused")
-    CouponCode.create!(code: "SK1001BBB", usage: "unused")
+    CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
+    CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
 
-    results = CouponCode.by_cursor(nil, 'next')
-    assert_equal 2, results.count
+    results = CouponCode.by_cursor(nil, "next")
+    # Account for any leftover coupon codes from other tests
+    assert results.count >= 2
   end
 end

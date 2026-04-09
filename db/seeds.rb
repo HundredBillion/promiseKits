@@ -4,14 +4,14 @@ if Rails.env.development?
   Order.destroy_all
   CouponCode.destroy_all
   PromiseFitnessKit.destroy_all
-  Admin.destroy_all
+  AdminUser.destroy_all
 end
 
 # Create Admin Users
 puts "Creating admin users..."
-Admin.create!(username: 'admin', password: 'password123', password_confirmation: 'password123')
-Admin.create!(username: 'testadmin', password: 'testpass', password_confirmation: 'testpass')
-puts "Created #{Admin.count} admin users"
+AdminUser.create!(username: 'admin', password: 'password123', password_confirmation: 'password123')
+AdminUser.create!(username: 'testadmin', password: 'testpass', password_confirmation: 'testpass')
+puts "Created #{AdminUser.count} admin users"
 
 # Create Fitness Kits
 puts "Creating fitness kits..."

@@ -1,12 +1,12 @@
 Rails.application.routes.draw do
   # Fitness kit order pages - only matches if slug exists in database
   # This allows me to create routes like promisekits.com/strength-kit-1
-  get '/:slug', to: 'orders#new', as: :fitness_kit_order,
+  get "/:slug", to: "orders#new", as: :fitness_kit_order,
     constraints: lambda { |request|
       slug = request.path_parameters[:slug]
       slug.present? && PromiseFitnessKit.exists?(slug: slug)
     }
-  post '/:slug', to: 'orders#create', as: :create_fitness_kit_order,
+  post "/:slug", to: "orders#create", as: :create_fitness_kit_order,
     constraints: lambda { |request|
       slug = request.path_parameters[:slug]
       slug.present? && PromiseFitnessKit.exists?(slug: slug)
@@ -25,29 +25,29 @@ Rails.application.routes.draw do
   # Admin namespace
   namespace :admin do
     # Login/logout
-    get 'login', to: 'sessions#new'
-    post 'login', to: 'sessions#create'
-    delete 'logout', to: 'sessions#destroy'
+    get "login", to: "sessions#new"
+    post "login", to: "sessions#create"
+    delete "logout", to: "sessions#destroy"
 
     # Dashboard
-    root to: 'dashboard#index', as: :dashboard
+    root to: "dashboard#index", as: :dashboard
 
     # Coupon Codes
-    resource :coupon_sequence, only: [:show, :update], controller: 'coupon_sequences'
-    resource :order_sequence, only: [:show, :update], controller: 'order_sequences'
-    resources :coupon_codes, only: [:index, :create, :destroy]
+    resource :coupon_sequence, only: [ :show, :update ], controller: "coupon_sequences"
+    resource :order_sequence, only: [ :show, :update ], controller: "order_sequences"
+    resources :coupon_codes, only: [ :index, :create, :destroy ]
 
     # Ad-hoc Order Exports UI (GET new + POST create)
     # Provides admin form to request immediate exports and enqueue the export job.
-    resource :order_exports, only: [:new, :create], controller: 'admin/order_exports'
+    resource :order_exports, only: [ :new, :create ]
   end
 
   # Redirect /admin to /admin/dashboard or login
-  get 'admin', to: redirect('/admin')
+  get "admin", to: redirect("/admin")
 
   # Defines the root path route ("/")
   root "home#index"
 
   # Order confirmation page
-  resources :orders, only: [:show]
+  resources :orders, only: [ :show ]
 end

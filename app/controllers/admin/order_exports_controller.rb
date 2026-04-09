@@ -16,11 +16,11 @@
 class Admin::OrderExportsController < Admin::BaseController
   # GET /admin/order_exports/new
   def new
-    @last_export = OrderExport.last_successful
+    @last_export = ::OrderExport.last_successful
     # Default recipient from config (initializer or ENV)
-    @default_recipient = OrderExport::Config.recipient_email
+    @default_recipient = OrderExportSettings::Config.recipient_email
     # Default scheduled_for shown to the admin in local (America/New_York) timezone
-    tz = ActiveSupport::TimeZone[OrderExport::Config.timezone]
+    tz = ActiveSupport::TimeZone[OrderExportSettings::Config.timezone]
     @default_scheduled_local = Time.current.in_time_zone(tz)
   end
 
@@ -36,13 +36,13 @@ class Admin::OrderExportsController < Admin::BaseController
   #   - Enqueue Admin::SendOrderExportJob with scheduled_for_utc and recipient.
   def create
     attrs = order_export_params
-    recipient = attrs[:recipient].presence || OrderExport::Config.recipient_email
+    recipient = attrs[:recipient].presence || OrderExportSettings::Config.recipient_email
 
     scheduled_for_utc = if attrs[:ends_at].present?
                           parse_local_to_utc(attrs[:ends_at])
-                        else
+    else
                           Time.current.utc
-                        end
+    end
 
     # Enqueue the export job (job will create an OrderExport record and perform the run)
     Admin::SendOrderExportJob.perform_later(scheduled_for_utc, recipient: recipient, manual: true)
@@ -65,7 +65,7 @@ class Admin::OrderExportsController < Admin::BaseController
   # Parse a local-time string (assumed in configured timezone) into a UTC Time.
   # Raises ArgumentError if parsing fails.
   def parse_local_to_utc(value)
-    tz = ActiveSupport::TimeZone[OrderExport::Config.timezone]
+    tz = ActiveSupport::TimeZone[OrderExportSettings::Config.timezone]
     raise ArgumentError, "Unknown timezone configuration" unless tz
 
     # Use Time.zone parsing resilience by constructing a tz-local time
@@ -87,8 +87,8 @@ class Admin::OrderExportsController < Admin::BaseController
       # Expect at least year, month, day for a robust parse; otherwise raise
       if parts.size >= 3
         year, month, day = parts[0..2]
-        hour = parts[3] || OrderExport::Config.schedule_hour
-        min  = parts[4] || OrderExport::Config.schedule_minute
+        hour = parts[3] || OrderExportSettings::Config.schedule_hour
+        min  = parts[4] || OrderExportSettings::Config.schedule_minute
         tz.local(year, month, day, hour, min, 0)
       else
         raise ArgumentError, "Unable to parse ends_at: '#{value}'"

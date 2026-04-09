@@ -1,4 +1,4 @@
-class Admin < ApplicationRecord
+class AdminUser < ApplicationRecord
   has_secure_password
 
   validates :username, presence: true,

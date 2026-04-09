@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 # Job: Admin::SendOrderExportJob
 #
@@ -6,7 +7,7 @@
 #  - determines the export window (ends_at = scheduled_for)
 #  - creates an OrderExport record
 #  - atomically reserves orders for the export via OrderExport#reserve_orders!
-#  - builds an .xlsx via OrderExport::Builder to a Tempfile
+#  - builds an .xlsx via OrderExportBuilder to a Tempfile
 #  - sends the file via Admin::OrderExportMailer
 #  - marks the export succeeded/failed and ensures temporary file cleanup
 #
@@ -32,7 +33,7 @@ class Admin::SendOrderExportJob < ApplicationJob
     scheduled_for_utc = parse_time_to_utc(scheduled_for_utc) || Time.current.utc
     recipient = determine_recipient(recipient)
 
-    export = OrderExport.create!(status: 'pending', scheduled_for: scheduled_for_utc, recipient: recipient)
+    export = OrderExport.create!(status: "pending", scheduled_for: scheduled_for_utc, recipient: recipient)
 
     begin
       # Reserve orders for this export run. The reserve_orders! method handles transactionality
@@ -42,7 +43,7 @@ class Admin::SendOrderExportJob < ApplicationJob
       Rails.logger.info("[Admin::SendOrderExportJob] export_id=#{export.id} reserved #{reserved_orders.size} orders (scheduled_for=#{scheduled_for_utc.iso8601})")
 
       # Build the .xlsx into a Tempfile
-      tmpfile = OrderExport::Builder.build_to_tempfile(orders: reserved_orders)
+      tmpfile = OrderExportBuilder.build_to_tempfile(orders: reserved_orders)
       filename = "orders_export_#{scheduled_for_utc.strftime('%Y%m%d_%H%M%S')}_UTC.xlsx"
 
       # Send the email synchronously from within the job (deliver_now)
@@ -112,6 +113,6 @@ class Admin::SendOrderExportJob < ApplicationJob
       # swallow config errors and fall back to ENV
     end
 
-    ENV['ORDER_EXPORT_RECIPIENT'] || ENV['DEFAULT_ORDER_EXPORT_RECIPIENT'] || raise(ArgumentError, "No recipient configured for Order Export")
+    ENV["ORDER_EXPORT_RECIPIENT"] || ENV["DEFAULT_ORDER_EXPORT_RECIPIENT"] || raise(ArgumentError, "No recipient configured for Order Export")
   end
 end

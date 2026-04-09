@@ -1,14 +1,14 @@
 require_relative "../test_helper"
 
-class AdminTest < ActiveSupport::TestCase
+class AdminUserTest < ActiveSupport::TestCase
   setup do
-    Admin.destroy_all
+    AdminUser.destroy_all
   end
 
   # Validations
 
   test "should be valid with valid attributes" do
-    admin = Admin.new(
+    admin = AdminUser.new(
       username: "testadmin",
       password: "password123",
       password_confirmation: "password123"
@@ -17,7 +17,7 @@ class AdminTest < ActiveSupport::TestCase
   end
 
   test "should require username" do
-    admin = Admin.new(
+    admin = AdminUser.new(
       username: nil,
       password: "password123",
       password_confirmation: "password123"
@@ -28,14 +28,14 @@ class AdminTest < ActiveSupport::TestCase
 
   test "should require unique username" do
     # Create first admin
-    Admin.create!(
+    AdminUser.create!(
       username: "duplicate",
       password: "password123",
       password_confirmation: "password123"
     )
 
     # Try to create second admin with same username
-    admin = Admin.new(
+    admin = AdminUser.new(
       username: "duplicate",
       password: "password456",
       password_confirmation: "password456"
@@ -45,7 +45,7 @@ class AdminTest < ActiveSupport::TestCase
   end
 
   test "should require username to be at least 3 characters" do
-    admin = Admin.new(
+    admin = AdminUser.new(
       username: "ab",
       password: "password123",
       password_confirmation: "password123"
@@ -55,7 +55,7 @@ class AdminTest < ActiveSupport::TestCase
   end
 
   test "should require username to be at most 50 characters" do
-    admin = Admin.new(
+    admin = AdminUser.new(
       username: "a" * 51,
       password: "password123",
       password_confirmation: "password123"
@@ -65,13 +65,13 @@ class AdminTest < ActiveSupport::TestCase
   end
 
   test "should require password on creation" do
-    admin = Admin.new(username: "testadmin", password: nil)
+    admin = AdminUser.new(username: "testadmin", password: nil)
     assert_not admin.valid?
     assert_includes admin.errors[:password], "can't be blank"
   end
 
   test "should require password to be at least 8 characters" do
-    admin = Admin.new(
+    admin = AdminUser.new(
       username: "testadmin",
       password: "short",
       password_confirmation: "short"
@@ -81,7 +81,7 @@ class AdminTest < ActiveSupport::TestCase
   end
 
   test "should allow password to be nil on update" do
-    admin = Admin.create!(
+    admin = AdminUser.create!(
       username: "testadmin",
       password: "password123",
       password_confirmation: "password123"
@@ -94,7 +94,7 @@ class AdminTest < ActiveSupport::TestCase
   # Authentication
 
   test "should authenticate with correct password" do
-    admin = Admin.create!(
+    admin = AdminUser.create!(
       username: "authtest",
       password: "password123",
       password_confirmation: "password123"
@@ -104,7 +104,7 @@ class AdminTest < ActiveSupport::TestCase
   end
 
   test "should not authenticate with incorrect password" do
-    admin = Admin.create!(
+    admin = AdminUser.create!(
       username: "authtest",
       password: "password123",
       password_confirmation: "password123"
@@ -114,7 +114,7 @@ class AdminTest < ActiveSupport::TestCase
   end
 
   test "should store password as hashed digest" do
-    admin = Admin.create!(
+    admin = AdminUser.create!(
       username: "hashtest",
       password: "password123",
       password_confirmation: "password123"
@@ -128,10 +128,10 @@ class AdminTest < ActiveSupport::TestCase
   # Edge cases
 
   test "should allow valid usernames" do
-    valid_usernames = ["admin", "test_user", "admin123", "Admin", "ADMIN"]
+    valid_usernames = [ "admin", "test_user", "admin123", "Admin", "ADMIN" ]
 
     valid_usernames.each do |username|
-      admin = Admin.new(
+      admin = AdminUser.new(
         username: username,
         password: "password123",
         password_confirmation: "password123"
@@ -143,7 +143,7 @@ class AdminTest < ActiveSupport::TestCase
   test "should trim whitespace from username" do
     # This test assumes we might add normalization in the future
     # For now, it documents expected behavior with whitespace
-    admin = Admin.new(
+    admin = AdminUser.new(
       username: "  spaced  ",
       password: "password123",
       password_confirmation: "password123"

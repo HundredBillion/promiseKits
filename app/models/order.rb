@@ -2,6 +2,7 @@ class Order < ApplicationRecord
   # Associations
   belongs_to :promise_fitness_kit
   belongs_to :coupon_code
+  has_many :exported_orders, inverse_of: :order, class_name: "ExportedOrder"
 
   # Constants
   US_STATES = %w[
@@ -16,14 +17,14 @@ class Order < ApplicationRecord
   validates :address1, presence: true
   validates :city, presence: true
   validates :state, presence: true,
-                    inclusion: { in: US_STATES, message: 'must be a valid US state' }
+                    inclusion: { in: US_STATES, message: "must be a valid US state" }
   validates :zip, presence: true,
-                  format: { with: /\A\d{5}(-\d{4})?\z/, message: 'must be 5 digits or ZIP+4' }
+                  format: { with: /\A\d{5}(-\d{4})?\z/, message: "must be 5 digits or ZIP+4" }
   validates :phone, presence: true,
-                    length: { is: 10, message: 'must be exactly 10 digits' },
-                    format: { with: /\A\d{10}\z/, message: 'must contain only digits' }
+                    length: { is: 10, message: "must be exactly 10 digits" },
+                    format: { with: /\A\d{10}\z/, message: "must contain only digits" }
   validates :email, presence: true,
-                    format: { with: URI::MailTo::EMAIL_REGEXP, message: 'must be a valid email' }
+                    format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email" }
   validates :order_confirmation, uniqueness: true, allow_nil: true
 
   # Custom validations
@@ -56,7 +57,7 @@ class Order < ApplicationRecord
   end
 
   def full_address
-    [address1, address2, "#{city}, #{state} #{zip}"].compact.join("\n")
+    [ address1, address2, "#{city}, #{state} #{zip}" ].compact.join("\n")
   end
 
   private
@@ -64,14 +65,14 @@ class Order < ApplicationRecord
   def normalize_attributes
     self.state = state.to_s.upcase.strip if state.present?
     self.email = email.to_s.downcase.strip if email.present?
-    self.phone = phone.to_s.gsub(/\D/, '') if phone.present? # Remove non-digits
+    self.phone = phone.to_s.gsub(/\D/, "") if phone.present? # Remove non-digits
     self.zip = zip.to_s.strip if zip.present?
   end
 
   def generate_order_confirmation
     # Use the Sequence model to atomically reserve a unique confirmation number.
     # This avoids races that can happen when using MAX(:order_confirmation).
-    seq = Sequence.for('order_confirmation')
+    seq = Sequence.for("order_confirmation")
     start_val = seq.reserve_range!(1)
     self.order_confirmation = start_val
   end
@@ -80,7 +81,7 @@ class Order < ApplicationRecord
     return unless coupon_code
 
     if coupon_code.used?
-      errors.add(:coupon_code, 'has already been used')
+      errors.add(:coupon_code, "has already been used")
     end
   end
 

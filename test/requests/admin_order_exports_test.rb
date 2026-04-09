@@ -2,7 +2,7 @@ require "test_helper"
 
 class AdminOrderExportsRequestsTest < ActionDispatch::IntegrationTest
   setup do
-    @admin = admins(:one)
+    @admin = admin_users(:one)
     # Ensure clean job queue and mail deliveries
     ActiveJob::Base.queue_adapter.enqueued_jobs.clear
     ActionMailer::Base.deliveries.clear
@@ -28,7 +28,7 @@ class AdminOrderExportsRequestsTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     # The new view should include a form to submit an export request
-    assert_select "form", 1
+    assert_select "form[action=?]", admin_order_exports_path, 1
     assert_select "input[name=?]", "order_export[recipient]"
     assert_select "input[name=?]", "order_export[ends_at]"
   end
@@ -40,7 +40,7 @@ class AdminOrderExportsRequestsTest < ActionDispatch::IntegrationTest
       post "/admin/order_exports", params: {
         order_export: {
           recipient: "ops@example.com",
-          ends_at: Time.current.in_time_zone(OrderExport::Config.timezone).strftime("%Y-%m-%d %H:%M")
+          ends_at: Time.current.in_time_zone(OrderExportSettings::Config.timezone).strftime("%Y-%m-%d %H:%M")
         }
       }
     end

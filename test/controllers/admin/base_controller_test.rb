@@ -2,10 +2,10 @@ require "test_helper"
 
 class Admin::BaseControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @admin = Admin.create!(
-      username: 'basecontrollertest',
-      password: 'password123',
-      password_confirmation: 'password123'
+    @admin = AdminUser.create!(
+      username: "basecontrollertest",
+      password: "password123",
+      password_confirmation: "password123"
     )
   end
 
@@ -31,7 +31,7 @@ class Admin::BaseControllerTest < ActionDispatch::IntegrationTest
     end
 
     def controller.admin_login_path
-      '/admin/login'
+      "/admin/login"
     end
 
     # Test that require_admin redirects

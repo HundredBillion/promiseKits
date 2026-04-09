@@ -4,7 +4,7 @@ require 'rails_helper'
 require 'tempfile'
 require 'active_support/time'
 
-RSpec.describe OrderExport::Builder, type: :service do
+RSpec.describe OrderExportBuilder, type: :service do
   # Lightweight structs that mimic the parts of the real models the builder expects.
   KitStruct = Struct.new(:name, :slug, :id)
   CouponStruct = Struct.new(:code, :id)
@@ -51,7 +51,7 @@ RSpec.describe OrderExport::Builder, type: :service do
 
   describe '.build_to_tempfile' do
     it 'returns a Tempfile containing a non-empty xlsx file' do
-      tmp = described_class.build_to_tempfile(orders: [order])
+      tmp = described_class.build_to_tempfile(orders: [ order ])
 
       expect(tmp).to be_a(Tempfile)
       expect(File).to exist(tmp.path)
@@ -66,7 +66,7 @@ RSpec.describe OrderExport::Builder, type: :service do
       older = OrderStruct.new(2, 122, Time.utc(2026, 2, 15, 12, 0, 0), 'A', 'One', 'a@example.com', '1111111111', 'Addr1', nil, 'City', 'ST', '11111', kit, nil, nil)
       newer = OrderStruct.new(3, 124, Time.utc(2026, 2, 17, 12, 0, 0), 'B', 'Two', 'b@example.com', '2222222222', 'Addr2', nil, 'City', 'ST', '22222', kit, nil, nil)
 
-      tmp = described_class.build_to_tempfile(orders: [older, order, newer])
+      tmp = described_class.build_to_tempfile(orders: [ older, order, newer ])
       expect(tmp).to be_a(Tempfile)
       expect(File.size(tmp.path)).to be > 0
 
@@ -83,7 +83,7 @@ RSpec.describe OrderExport::Builder, type: :service do
     end
 
     it 'allows a custom sheet name via opts' do
-      tmp = described_class.build_to_tempfile(orders: [order], opts: { sheet_name: 'CustomSheet' })
+      tmp = described_class.build_to_tempfile(orders: [ order ], opts: { sheet_name: 'CustomSheet' })
       expect(tmp).to be_a(Tempfile)
       expect(File.size(tmp.path)).to be > 0
       tmp.close

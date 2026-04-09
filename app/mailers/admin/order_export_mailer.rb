@@ -3,7 +3,7 @@
 module Admin
   class OrderExportMailer < ApplicationMailer
     # Default sender — override with ENV or application config if desired
-    default from: -> { ENV.fetch('DEFAULT_FROM_EMAIL', 'no-reply@example.com') }
+    default from: -> { ENV.fetch("DEFAULT_FROM_EMAIL", "no-reply@example.com") }
 
     # Sends an email with the generated Excel attachment.
     #
@@ -31,33 +31,33 @@ module Admin
       # Determine the scheduled time (use provided scheduled_for or now).
       scheduled_for_utc = if scheduled_for.present?
                             scheduled_for.to_time.utc
-                          else
+      else
                             Time.current.utc
-                          end
+      end
 
       # Determine window label using centralized config helper so formatting is consistent
       # Fallback to a simple date label if helper not available.
-      window_label = if defined?(OrderExport::Config) && OrderExport::Config.respond_to?(:window_label_for)
-                       OrderExport::Config.window_label_for(scheduled_for_utc)
-                     else
-                       scheduled_for_utc.in_time_zone('America/New_York').strftime('%b %d %Y')
-                     end
+      window_label = if defined?(OrderExportSettings::Config) && OrderExportSettings::Config.respond_to?(:window_label_for)
+                       OrderExportSettings::Config.window_label_for(scheduled_for_utc)
+      else
+                       scheduled_for_utc.in_time_zone("America/New_York").strftime("%b %d %Y")
+      end
 
       # Use exported_count if caller/job provided it; otherwise fall back to export record count if available.
       total_count = if exported_count.present?
                       exported_count.to_i
-                    elsif @export.present?
+      elsif @export.present?
                       @export.reserved_count
-                    else
+      else
                       0
-                    end
+      end
 
       mail_subject = "#{total_count} Orders #{window_label}"
 
       # Attach the generated file if present. Read in binary mode.
       if File.exist?(file_path)
         attachments[filename] = {
-          mime_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          mime_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
           content: File.binread(file_path)
         }
       else

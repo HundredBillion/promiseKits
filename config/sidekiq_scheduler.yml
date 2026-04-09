@@ -17,5 +17,13 @@ send_order_export_job:
   queue: "default"
   description: "Scheduled export of orders and email (Mon/Wed/Fri at 07:00 America/New_York)"
   enabled: true
-  # No static args provided; the job will compute scheduled_for from current time (UTC).
+  args: []
+
+florida_orders_export_job:
+  cron: "0 7 1 * *"
+  tz: "America/New_York"
+  class: "AdminReports::FloridaOrdersExportJob"
+  queue: "default"
+  description: "Monthly Florida orders summary (1st of month at 07:00 America/New_York)"
+  enabled: true
   args: []

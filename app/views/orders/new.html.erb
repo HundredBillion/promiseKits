@@ -5,7 +5,7 @@
     <div class="kit-info-sidebar">
       <fieldset>
         <legend>Your Kit</legend>
-        <%= image_tag "#{@promise_fitness_kit.name}.png", alt: @promise_fitness_kit.name, class: 'kit-image-large' %>
+        <%= render "kit_image", kit: @promise_fitness_kit %>
         <div class="kit-details">
           <h2><%= @promise_fitness_kit.name %></h2>
           <p class="kit-description"><%= @promise_fitness_kit.description %></p>

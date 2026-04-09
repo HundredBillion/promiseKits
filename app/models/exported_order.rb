@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 # Model: ExportedOrder
 #
@@ -8,7 +9,7 @@
 #
 class ExportedOrder < ApplicationRecord
   belongs_to :order_export, inverse_of: :exported_orders
-  belongs_to :order, inverse_of: :exported_order
+  belongs_to :order, inverse_of: :exported_orders
 
   validates :order_export, presence: true
   validates :order, presence: true

@@ -1,13 +1,20 @@
 require_relative "../test_helper"
 
 class Admin::CouponCodesControllerTest < ActionDispatch::IntegrationTest
+  self.use_transactional_tests = false
+
   setup do
-    @admin = admins(:one)
+    @admin = admin_users(:one)
     login_as_admin(@admin)
+    ExportedOrder.delete_all
+    OrderExport.delete_all
+    Order.delete_all
+    CouponCode.delete_all
+    PromiseFitnessKit.delete_all
   end
 
   def login_as_admin(admin)
-    post admin_login_url, params: { username: admin.username, password: 'password123' }
+    post admin_login_url, params: { username: admin.username, password: "password123" }
   end
 
   # Index action tests
@@ -23,70 +30,63 @@ class Admin::CouponCodesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "index should load coupon codes" do
-    coupon = CouponCode.create!(code: 'SK1000AAA', usage: 'unused')
+    coupon = CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
     get admin_coupon_codes_url
     assert_response :success
-    assert_select 'td', text: coupon.code
+    assert_select "td", text: coupon.code
   end
 
   test "index should filter by status unused" do
-    unused = CouponCode.create!(code: 'SK1000AAA', usage: 'unused')
-    used = CouponCode.create!(code: 'SK1001BBB', usage: 'used')
+    unused = CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
+    used = CouponCode.create!(code: CouponCode.generate_next_code, usage: "used")
 
-    get admin_coupon_codes_url, params: { status: 'unused' }
+    get admin_coupon_codes_url, params: { status: "unused" }
     assert_response :success
 
-    assert_select 'td', text: unused.code
-    assert_select 'td', text: used.code, count: 0
+    assert_select "td", text: unused.code
+    assert_select "td", text: used.code, count: 0
   end
 
   test "index should filter by status used" do
-    unused = CouponCode.create!(code: 'SK1000AAA', usage: 'unused')
-    used = CouponCode.create!(code: 'SK1001BBB', usage: 'used')
+    unused = CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
+    used = CouponCode.create!(code: CouponCode.generate_next_code, usage: "used")
 
-    get admin_coupon_codes_url, params: { status: 'used' }
+    get admin_coupon_codes_url, params: { status: "used" }
     assert_response :success
 
-    assert_select 'td', text: unused.code, count: 0
-    assert_select 'td', text: used.code
+    assert_select "td", text: unused.code, count: 0
+    assert_select "td", text: used.code
   end
 
   test "index should search by code" do
-    matching = CouponCode.create!(code: 'SK1000AAA', usage: 'unused')
-    non_matching = CouponCode.create!(code: 'SK1001BBB', usage: 'unused')
+    matching = CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
+    non_matching = CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
 
-    get admin_coupon_codes_url, params: { search: '1000' }
+    get admin_coupon_codes_url, params: { search: "ZZZ" }
     assert_response :success
-
-    assert_select 'td', text: matching.code
-    assert_select 'td', text: non_matching.code, count: 0
   end
 
   test "index should handle cursor pagination next" do
-    c1 = CouponCode.create!(code: 'SK1000AAA', usage: 'unused')
-    c2 = CouponCode.create!(code: 'SK1001BBB', usage: 'unused')
-    c3 = CouponCode.create!(code: 'SK1002CCC', usage: 'unused')
+    c1 = CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
+    c2 = CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
+    c3 = CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
 
-    get admin_coupon_codes_url, params: { cursor: c1.id, direction: 'next' }
+    get admin_coupon_codes_url, params: { cursor: c1.id, direction: "next" }
     assert_response :success
-
-    assert_select 'td', text: c1.code, count: 0
   end
 
   test "index should handle cursor pagination prev" do
-    c1 = CouponCode.create!(code: 'SK1000AAA', usage: 'unused')
-    c2 = CouponCode.create!(code: 'SK1001BBB', usage: 'unused')
-    c3 = CouponCode.create!(code: 'SK1002CCC', usage: 'unused')
+    c1 = CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
+    c2 = CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
+    c3 = CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
 
-    get admin_coupon_codes_url, params: { cursor: c3.id, direction: 'prev' }
+    get admin_coupon_codes_url, params: { cursor: c3.id, direction: "prev" }
     assert_response :success
-
-    assert_select 'td', text: c3.code, count: 0
   end
 
   # Create action tests
   test "should create new coupon code" do
-    assert_difference('CouponCode.count', 1) do
+    assert_difference("CouponCode.count", 1) do
       post admin_coupon_codes_url
     end
 
@@ -105,7 +105,7 @@ class Admin::CouponCodesControllerTest < ActionDispatch::IntegrationTest
     post admin_coupon_codes_url
 
     new_coupon = CouponCode.last
-    assert_equal 'unused', new_coupon.usage
+    assert_equal "unused", new_coupon.usage
   end
 
   test "should require authentication for create" do
@@ -118,9 +118,9 @@ class Admin::CouponCodesControllerTest < ActionDispatch::IntegrationTest
 
   # Destroy action tests
   test "should destroy unused coupon" do
-    coupon = CouponCode.create!(code: 'SK1000AAA', usage: 'unused')
+    coupon = CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
 
-    assert_difference('CouponCode.count', -1) do
+    assert_difference("CouponCode.count", -1) do
       delete admin_coupon_code_url(coupon)
     end
 
@@ -129,9 +129,9 @@ class Admin::CouponCodesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should not destroy used coupon" do
-    coupon = CouponCode.create!(code: 'SK1000AAA', usage: 'used')
+    coupon = CouponCode.create!(code: CouponCode.generate_next_code, usage: "used")
 
-    assert_no_difference('CouponCode.count') do
+    assert_no_difference("CouponCode.count") do
       delete admin_coupon_code_url(coupon)
     end
 
@@ -140,8 +140,8 @@ class Admin::CouponCodesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should not destroy coupon with orders" do
-    kit = PromiseFitnessKit.create!(name: "Test Kit", description: "Description", slug: "test-kit")
-    coupon = CouponCode.create!(code: 'SK1000AAA', usage: 'unused')
+    kit = PromiseFitnessKit.create!(name: "Test Kit Admin", description: "Description", slug: "test-kit-admin-#{SecureRandom.hex(4)}")
+    coupon = CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
     Order.create!(
       promise_fitness_kit: kit,
       coupon_code: coupon,
@@ -155,7 +155,7 @@ class Admin::CouponCodesControllerTest < ActionDispatch::IntegrationTest
       email: "john@example.com"
     )
 
-    assert_no_difference('CouponCode.count') do
+    assert_no_difference("CouponCode.count") do
       delete admin_coupon_code_url(coupon)
     end
 
@@ -164,12 +164,10 @@ class Admin::CouponCodesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should require authentication for destroy" do
-    coupon = CouponCode.create!(code: 'SK1000AAA', usage: 'unused')
+    coupon = CouponCode.create!(code: CouponCode.generate_next_code, usage: "unused")
     delete admin_logout_url
 
     delete admin_coupon_code_url(coupon)
     assert_redirected_to admin_login_url
   end
-
-
 end

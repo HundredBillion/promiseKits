@@ -1,6 +1,7 @@
 # frozen_string_literal: true
+
 #
-# Service: OrderExport::Builder
+# Service: OrderExportBuilder
 #
 # Purpose:
 # - Build an Excel (.xlsx) file containing the given set of orders.
@@ -8,7 +9,7 @@
 #
 # Usage:
 #   orders = Order.where(created_at: start..finish).order(:created_at)
-#   tmpfile = OrderExport::Builder.build_to_tempfile(orders: orders)
+#   tmpfile = OrderExportBuilder.build_to_tempfile(orders: orders)
 #   # attach tmpfile.path to mailer, then ensure unlink/close when done
 #
 # Notes:
@@ -16,11 +17,10 @@
 # - The method returns a Tempfile that the caller is responsible for closing/unlinking.
 # - We format `order_confirmation` as a zero-padded 6-digit string to match UI formatting.
 #
-require 'tempfile'
-require 'caxlsx'
+require "tempfile"
+require "caxlsx"
 
-module OrderExport
-  class Builder
+class OrderExportBuilder
     # Public: build an .xlsx file containing provided orders.
     #
     # Params:
@@ -34,13 +34,13 @@ module OrderExport
     def self.build_to_tempfile(orders:, opts: {})
       raise ArgumentError, "orders is required" if orders.nil?
 
-      sheet_name = opts.fetch(:sheet_name, 'Orders')
+      sheet_name = opts.fetch(:sheet_name, "Orders")
 
       # Ensure we have an array or relation we can iterate multiple times
       orders_enum = orders.respond_to?(:to_a) ? orders.to_a : Array(orders)
 
       # Create a temp file for binary xlsx output
-      tmp = Tempfile.new(['orders_export', '.xlsx'])
+      tmp = Tempfile.new([ "orders_export", ".xlsx" ])
       tmp.binmode
 
       package = Axlsx::Package.new
@@ -48,7 +48,7 @@ module OrderExport
 
       # Styles
       header_style = workbook.styles.add_style(b: true, sz: 12, alignment: { horizontal: :center })
-      date_style = workbook.styles.add_style(format_code: 'yyyy-mm-dd hh:mm:ss')
+      date_style = workbook.styles.add_style(format_code: "yyyy-mm-dd hh:mm:ss")
 
       workbook.add_worksheet(name: sheet_name) do |sheet|
         # Header row (column names)
@@ -57,7 +57,7 @@ module OrderExport
         # Add rows in batches to limit memory pressure (we already have orders in memory likely)
         # We'll iterate and append rows; caxlsx builds the file in memory until serialize is called.
         orders_enum.each do |order|
-          sheet.add_row row_for(order), style: [nil, date_style] + Array.new(header_columns.count - 2)
+          sheet.add_row row_for(order), style: [ nil, date_style ] + Array.new(header_columns.count - 2)
         end
       end
 
@@ -74,21 +74,21 @@ module OrderExport
     # plus friendly names for related fields.
     def self.header_columns
       [
-        'id',
-        'order_confirmation',
-        'created_at_utc',
-        'first_name',
-        'last_name',
-        'email',
-        'phone',
-        'address1',
-        'address2',
-        'city',
-        'state',
-        'zip',
-        'promise_fitness_kit',
-        'coupon_code',
-        'description'
+        "id",
+        "order_confirmation",
+        "created_at_utc",
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "address1",
+        "address2",
+        "city",
+        "state",
+        "zip",
+        "promise_fitness_kit",
+        "coupon_code",
+        "description"
       ]
     end
 
@@ -117,7 +117,7 @@ module OrderExport
     def self.formatted_order_confirmation(value)
       return nil if value.nil?
       # Ensure we coerce to integer then format with zero padding to 6 digits
-      sprintf('%06d', value.to_i)
+      sprintf("%06d", value.to_i)
     end
     private_class_method :formatted_order_confirmation
 
@@ -133,5 +133,4 @@ module OrderExport
       coupon.code.presence || coupon.id
     end
     private_class_method :coupon_code_label
-  end
 end

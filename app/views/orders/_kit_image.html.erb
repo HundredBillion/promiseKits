@@ -1,0 +1,12 @@
+<% image_path = "#{kit.name}.png" %>
+<% if Rails.env.test? %>
+  <div class="kit-image-placeholder" style="width:200px;height:200px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;border-radius:8px;">
+    <span><%= kit.name %></span>
+  </div>
+<% elsif Rails.application.assets_manifest&.assets&.key?(image_path) %>
+  <%= image_tag image_path, alt: kit.name, class: 'kit-image-large' %>
+<% else %>
+  <div class="kit-image-placeholder" style="width:200px;height:200px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;border-radius:8px;">
+    <span><%= kit.name %></span>
+  </div>
+<% end %>

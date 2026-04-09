@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 # ActionMailer SMTP configuration initializer
 #
@@ -31,26 +32,30 @@
 #
 Rails.application.configure do
   # Allow overriding delivery method via env (useful for tests or special setups)
-  delivery_method = ENV.fetch('MAIL_DELIVERY_METHOD', 'smtp').to_sym
+  delivery_method = ENV.fetch("MAIL_DELIVERY_METHOD", "smtp").to_sym
 
   # Support toggling real delivery (useful for CI/test environments)
-  smtp_enabled = ENV.fetch('SMTP_ENABLED', 'true').downcase != 'false'
+  smtp_enabled = ENV.fetch("SMTP_ENABLED", "true").downcase != "false"
 
   # Helper to parse boolean-ish env vars
   env_true = ->(val) do
     case val.to_s.strip.downcase
-    when '1', 'true', 'yes', 'on' then true
+    when "1", "true", "yes", "on" then true
     else false
     end
   end
 
   # In development you might want to use letter_opener; respect an env toggle.
-  use_letter_opener = env_true.call(ENV['USE_LETTER_OPENER']) && Rails.env.development?
+  use_letter_opener = env_true.call(ENV["USE_LETTER_OPENER"]) && Rails.env.development?
 
   if use_letter_opener
     # If you want to use letter_opener in development, set USE_LETTER_OPENER=true.
     # Note: this initializer does not add the gem for you; ensure letter_opener is in your Gemfile in :development.
     config.action_mailer.delivery_method = :letter_opener
+    config.action_mailer.perform_deliveries = true
+  elsif Rails.env.test?
+    # Always use :test delivery method in test environment
+    config.action_mailer.delivery_method = :test
     config.action_mailer.perform_deliveries = true
   else
     config.action_mailer.delivery_method = delivery_method
@@ -58,24 +63,24 @@ Rails.application.configure do
   end
 
   # Default from address: prefer explicit ENV, fallback to OrderExport config if present, then a safe default.
-  default_from = if ENV['DEFAULT_FROM_EMAIL'].present?
-                   ENV['DEFAULT_FROM_EMAIL']
-                 elsif defined?(OrderExport) && defined?(OrderExport::Config) && OrderExport::Config.respond_to?(:from_email)
-                   OrderExport::Config.from_email
-                 else
-                   'no-reply@example.com'
-                 end
+  default_from = if ENV["DEFAULT_FROM_EMAIL"].present?
+                   ENV["DEFAULT_FROM_EMAIL"]
+  elsif defined?(OrderExportSettings) && defined?(OrderExportSettings::Config) && OrderExportSettings::Config.respond_to?(:from_email)
+                   OrderExportSettings::Config.from_email
+  else
+                   "no-reply@example.com"
+  end
 
   # Configure SMTP settings only when using SMTP delivery.
   if config.action_mailer.delivery_method == :smtp
-    smtp_address = ENV.fetch('SMTP_ADDRESS', 'smtp.gmail.com')
-    smtp_port    = ENV.fetch('SMTP_PORT', '587').to_i
-    smtp_domain  = ENV.fetch('SMTP_DOMAIN') { ENV['MAIL_DOMAIN'] || smtp_address }
-    smtp_user    = ENV['SMTP_USER']
-    smtp_pass    = ENV['SMTP_PASSWORD']
-    smtp_auth    = ENV.fetch('SMTP_AUTHENTICATION', 'plain').to_sym
-    starttls     = env_true.call(ENV.fetch('SMTP_ENABLE_STARTTLS_AUTO', 'true'))
-    openssl_mode = ENV['SMTP_OPENSSL_VERIFY_MODE'].presence
+    smtp_address = ENV.fetch("SMTP_ADDRESS", "smtp.gmail.com")
+    smtp_port    = ENV.fetch("SMTP_PORT", "587").to_i
+    smtp_domain  = ENV.fetch("SMTP_DOMAIN") { ENV["MAIL_DOMAIN"] || smtp_address }
+    smtp_user    = ENV["SMTP_USER"]
+    smtp_pass    = ENV["SMTP_PASSWORD"]
+    smtp_auth    = ENV.fetch("SMTP_AUTHENTICATION", "plain").to_sym
+    starttls     = env_true.call(ENV.fetch("SMTP_ENABLE_STARTTLS_AUTO", "true"))
+    openssl_mode = ENV["SMTP_OPENSSL_VERIFY_MODE"].presence
 
     config.action_mailer.smtp_settings = {
       address:              smtp_address,
@@ -105,10 +110,10 @@ Rails.application.configure do
 
   # Useful defaults for email URLs in mailers (host must be configured in env)
   # Example: MAILER_HOST=app.example.com
-  mailer_host = ENV['MAILER_HOST'] || ENV['HOST'] || "localhost:#{ENV.fetch('PORT', 3000)}"
+  mailer_host = ENV["MAILER_HOST"] || ENV["HOST"] || "localhost:#{ENV.fetch('PORT', 3000)}"
   config.action_mailer.default_url_options ||= {}
   config.action_mailer.default_url_options[:host] = mailer_host
-  config.action_mailer.default_url_options[:protocol] = ENV.fetch('MAILER_PROTOCOL', Rails.env.production? ? 'https' : 'http')
+  config.action_mailer.default_url_options[:protocol] = ENV.fetch("MAILER_PROTOCOL", Rails.env.production? ? "https" : "http")
 
   # A small helper method exposed via Rails logger to view effective SMTP status (no secrets)
   Rails.logger.info("[action_mailer_smtp] delivery_method=#{config.action_mailer.delivery_method}; perform_deliveries=#{config.action_mailer.perform_deliveries}; mailer_host=#{mailer_host}")

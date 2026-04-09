@@ -2,15 +2,18 @@ require "test_helper"
 
 class OrderExportTest < ActiveSupport::TestCase
   setup do
-    # Basic fixtures for related models
-    @kit = PromiseFitnessKit.create!(name: "Kit A", description: "Desc", slug: "kit-a")
-    @coupon = CouponCode.create!(code: "C-TEST", usage: "unused")
+    # Basic fixtures for related models - use unique slugs to avoid conflicts
+    @kit = PromiseFitnessKit.create!(name: "Kit A", description: "Desc", slug: "kit-a-#{SecureRandom.hex(4)}")
+    @coupon1 = CouponCode.create!(code: "SK3000AAA", usage: "unused")
+    @coupon2 = CouponCode.create!(code: "SK3001BBB", usage: "unused")
+    @coupon3 = CouponCode.create!(code: "SK3002CCC", usage: "unused")
+    @coupon4 = CouponCode.create!(code: "SK3003DDD", usage: "unused")
 
     # Create three orders with controlled created_at times
     now = Time.current.utc
     @order_before = Order.create!(
       promise_fitness_kit: @kit,
-      coupon_code: @coupon,
+      coupon_code: @coupon1,
       first_name: "Before",
       last_name: "Order",
       address1: "1 Test St",
@@ -24,7 +27,7 @@ class OrderExportTest < ActiveSupport::TestCase
 
     @order_in_window_1 = Order.create!(
       promise_fitness_kit: @kit,
-      coupon_code: @coupon,
+      coupon_code: @coupon2,
       first_name: "Window1",
       last_name: "Order",
       address1: "2 Test St",
@@ -38,7 +41,7 @@ class OrderExportTest < ActiveSupport::TestCase
 
     @order_in_window_2 = Order.create!(
       promise_fitness_kit: @kit,
-      coupon_code: @coupon,
+      coupon_code: @coupon3,
       first_name: "Window2",
       last_name: "Order",
       address1: "3 Test St",
@@ -52,7 +55,7 @@ class OrderExportTest < ActiveSupport::TestCase
 
     @order_after = Order.create!(
       promise_fitness_kit: @kit,
-      coupon_code: @coupon,
+      coupon_code: @coupon4,
       first_name: "After",
       last_name: "Order",
       address1: "4 Test St",
@@ -66,12 +69,12 @@ class OrderExportTest < ActiveSupport::TestCase
 
     # Ensure no pre-existing exported rows
     ExportedOrder.delete_all
-    OrderExport.delete_all
+    ::OrderExport.delete_all
   end
 
   test "reserve_orders! reserves only orders in (starts_at, ends_at] and marks export running" do
     # Simulate a last successful export that ended before the window
-    last = OrderExport.create!(status: "succeeded", scheduled_for: 2.days.ago.utc, ends_at: 2.days.ago.utc)
+    last = ::OrderExport.create!(status: "succeeded", scheduled_for: 2.days.ago.utc, ends_at: 2.days.ago.utc)
     scheduled_for = Time.current.utc
     export = OrderExport.create!(status: "pending", scheduled_for: scheduled_for)
 
@@ -91,22 +94,35 @@ class OrderExportTest < ActiveSupport::TestCase
   end
 
   test "reserve_orders! skips orders already exported (uniqueness) and returns only newly reserved" do
+    # Clear any existing exports to ensure deterministic behavior
+    ExportedOrder.delete_all
+    OrderExport.delete_all
+
     scheduled_for = Time.current.utc
 
     # Pre-reserve one of the orders to simulate concurrent reservation (as if another worker took it)
-    pre_export = OrderExport.create!(status: "succeeded", scheduled_for: 1.day.ago.utc, ends_at: 1.day.ago.utc)
-    taken_export = OrderExport.create!(status: "succeeded", scheduled_for: scheduled_for, ends_at: scheduled_for)
+    # Use a different scheduled_for time so it doesn't interfere with the test export
+    earlier_time = 10.minutes.ago.utc
+    taken_export = OrderExport.create!(status: "succeeded", scheduled_for: earlier_time, ends_at: earlier_time)
     ExportedOrder.create!(order_export: taken_export, order: @order_in_window_1)
 
-    # Now create a new export and attempt to reserve the same window; the already-taken order should be skipped
+    # Now create a new export and attempt to reserve orders starting from before the orders were created
+    # This forces the query to include @order_in_window_1 and @order_in_window_2
     export = OrderExport.create!(status: "pending", scheduled_for: scheduled_for)
-    reserved = export.reserve_orders!(ends_at: scheduled_for)
+
+    # Use starts_at before the orders were created to include both in the window
+    starts_at = @order_in_window_1.created_at - 1.hour
+    reserved = export.reserve_orders!(ends_at: scheduled_for, starts_at: starts_at)
 
     reserved_ids = reserved.pluck(:id)
+
+    # @order_in_window_1 was already exported, so it should be skipped
     assert_not_includes reserved_ids, @order_in_window_1.id, "Previously exported order should be skipped"
+
+    # @order_in_window_2 should be reserved
     assert_includes reserved_ids, @order_in_window_2.id, "Other orders in window should be reserved"
 
-    # Ensure exported_orders are not duplicated for the taken order (unique constraint enforced)
+    # Ensure only one ExportedOrder exists for @order_in_window_1 (the original one)
     assert_equal 1, ExportedOrder.where(order_id: @order_in_window_1.id).count
   end
 

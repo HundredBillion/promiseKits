@@ -2,10 +2,10 @@ require "test_helper"
 
 class Admin::SessionsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @admin = Admin.create!(
-      username: 'sessiontest',
-      password: 'password123',
-      password_confirmation: 'password123'
+    @admin = AdminUser.create!(
+      username: "sessiontest",
+      password: "password123",
+      password_confirmation: "password123"
     )
   end
 
@@ -20,7 +20,7 @@ class Admin::SessionsControllerTest < ActionDispatch::IntegrationTest
     # Log in first
     post admin_login_path, params: {
       username: @admin.username,
-      password: 'password123'
+      password: "password123"
     }
 
     # Try to access login page again
@@ -32,7 +32,7 @@ class Admin::SessionsControllerTest < ActionDispatch::IntegrationTest
   test "should log in with valid credentials" do
     post admin_login_path, params: {
       username: @admin.username,
-      password: 'password123'
+      password: "password123"
     }
 
     assert_redirected_to admin_dashboard_path
@@ -43,8 +43,8 @@ class Admin::SessionsControllerTest < ActionDispatch::IntegrationTest
 
   test "should not log in with invalid username" do
     post admin_login_path, params: {
-      username: 'wronguser',
-      password: 'password123'
+      username: "wronguser",
+      password: "password123"
     }
 
     assert_response :unprocessable_entity
@@ -55,7 +55,7 @@ class Admin::SessionsControllerTest < ActionDispatch::IntegrationTest
   test "should not log in with invalid password" do
     post admin_login_path, params: {
       username: @admin.username,
-      password: 'wrongpassword'
+      password: "wrongpassword"
     }
 
     assert_response :unprocessable_entity
@@ -66,7 +66,7 @@ class Admin::SessionsControllerTest < ActionDispatch::IntegrationTest
   test "should set session expiration time on login" do
     post admin_login_path, params: {
       username: @admin.username,
-      password: 'password123'
+      password: "password123"
     }
 
     assert_not_nil session[:admin_expires_at]
@@ -81,7 +81,7 @@ class Admin::SessionsControllerTest < ActionDispatch::IntegrationTest
     # Log in first
     post admin_login_path, params: {
       username: @admin.username,
-      password: 'password123'
+      password: "password123"
     }
     assert_not_nil session[:admin_id]
 
@@ -105,15 +105,15 @@ class Admin::SessionsControllerTest < ActionDispatch::IntegrationTest
   test "should not expose which field is incorrect" do
     # Wrong username
     post admin_login_path, params: {
-      username: 'nonexistent',
-      password: 'password123'
+      username: "nonexistent",
+      password: "password123"
     }
     wrong_username_message = flash[:alert]
 
     # Wrong password
     post admin_login_path, params: {
       username: @admin.username,
-      password: 'wrongpass'
+      password: "wrongpass"
     }
     wrong_password_message = flash[:alert]
 
@@ -124,8 +124,8 @@ class Admin::SessionsControllerTest < ActionDispatch::IntegrationTest
 
   test "should handle empty credentials" do
     post admin_login_path, params: {
-      username: '',
-      password: ''
+      username: "",
+      password: ""
     }
 
     assert_response :unprocessable_entity

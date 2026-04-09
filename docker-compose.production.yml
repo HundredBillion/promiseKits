@@ -1,12 +1,29 @@
-version: "3.8"
-
-# Docker Compose for promisekits (Rails + Sidekiq + Redis)
-# - This file is for development/staging usage.
+# Docker Compose for promisekits PRODUCTION with PostgreSQL
+# - Use this for staging/production deployments
 # - Do NOT store secrets in this file. Use an external .env or your orchestration secrets manager.
 # - Environment variables referenced below should be provided via .env or runtime secrets.
-# - The app uses SQLite. Persistent storage is mounted via the sqlite_data volume.
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: promisekits_postgres
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-promisekits_production}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-promisekits_production}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - promisekits_net
+
   redis:
     image: redis:7-alpine
     container_name: promisekits_redis
@@ -18,24 +35,28 @@ services:
       retries: 5
     volumes:
       - redis_data:/data
+    networks:
+      - promisekits_net
 
   web:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     container_name: promisekits_web
     command: bash -lc "bundle exec puma -C config/puma.rb"
     restart: unless-stopped
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
     env_file:
-      - .env # optional local env file (ignored by git via .gitignore)
+      - .env
     environment:
-      RAILS_ENV: ${RAILS_ENV:-production}
+      RAILS_ENV: production
       RAILS_SERVE_STATIC_FILES: "true"
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-promisekits_production}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
-      # Mailer/SMTP settings (provide in .env or secrets)
       SMTP_ADDRESS: ${SMTP_ADDRESS}
       SMTP_PORT: ${SMTP_PORT}
       SMTP_DOMAIN: ${SMTP_DOMAIN}
@@ -45,11 +66,10 @@ services:
       SMTP_ENABLE_STARTTLS_AUTO: ${SMTP_ENABLE_STARTTLS_AUTO:-true}
       DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL}
       ORDER_EXPORT_RECIPIENT: ${ORDER_EXPORT_RECIPIENT}
-      MAILER_HOST: ${MAILER_HOST:-localhost}
+      MAILER_HOST: ${MAILER_HOST}
     ports:
       - "${PORT:-3000}:3000"
     volumes:
-      - sqlite_data:/rails/storage
       - bundle_cache:/usr/local/bundle
     networks:
       - promisekits_net
@@ -57,17 +77,20 @@ services:
   sidekiq:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     container_name: promisekits_sidekiq
-    command: bash -lc "bundle exec sidekiq -e ${RAILS_ENV:-production} -C config/sidekiq.yml"
+    command: bash -lc "bundle exec sidekiq -e production -C config/sidekiq.yml"
     restart: unless-stopped
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
     env_file:
       - .env
     environment:
-      RAILS_ENV: ${RAILS_ENV:-production}
+      RAILS_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-promisekits_production}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       SMTP_ADDRESS: ${SMTP_ADDRESS}
       SMTP_PORT: ${SMTP_PORT}
@@ -77,63 +100,51 @@ services:
       DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL}
       ORDER_EXPORT_RECIPIENT: ${ORDER_EXPORT_RECIPIENT}
     volumes:
-      - sqlite_data:/rails/storage
       - bundle_cache:/usr/local/bundle
     networks:
       - promisekits_net
 
-  # One-off runner for Rails tasks (migrations, console, etc.)
-  # Use: docker compose run --rm runner bin/rails db:migrate
   runner:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     container_name: promisekits_runner
     entrypoint: ["/bin/sh", "-lc"]
     command: ["bin/rails db:migrate"]
     env_file:
       - .env
     environment:
-      RAILS_ENV: ${RAILS_ENV:-production}
+      RAILS_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-promisekits_production}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     depends_on:
-      redis:
+      postgres:
         condition: service_healthy
     volumes:
-      - sqlite_data:/rails/storage
       - bundle_cache:/usr/local/bundle
     networks:
       - promisekits_net
-    # This service is not intended to be left running; use `docker compose run --rm runner <cmd>`
 
 volumes:
+  postgres_data:
   redis_data:
-  sqlite_data:
   bundle_cache:
 
 networks:
   promisekits_net:
     driver: bridge
 
-# Security & operational notes:
-# - Provide secrets via an external `.env` file that is gitignored, or better, Docker secrets /
-#   your orchestrator's secrets manager.
-# - Required .env variables:
-#   RAILS_MASTER_KEY=<value from config/master.key>
-#   SMTP_ADDRESS=smtp.gmail.com
-#   SMTP_PORT=587
-#   SMTP_DOMAIN=yourdomain.com
-#   SMTP_USER=reports@yourdomain.com
-#   SMTP_PASSWORD=app-password-or-credential
-#   DEFAULT_FROM_EMAIL=reports@yourdomain.com
-#   ORDER_EXPORT_RECIPIENT=reports@yourdomain.com
-#   MAILER_HOST=app.yourdomain.com
+# Usage:
+# 1. Create a production .env with real secrets:
+#    POSTGRES_PASSWORD=<secure-password>
+#    POSTGRES_DB=promisekits_production
+#    RAILS_MASTER_KEY=<from config/master.key>
 #
-# - To start the stack:
-#   1. Create a local .env with the required secrets above
-#   2. docker compose build
-#   3. docker compose run --rm runner bin/rails db:create db:migrate
-#   4. docker compose up -d web sidekiq
+# 2. Build and start:
+#    docker compose -f docker-compose.production.yml build
+#    docker compose -f docker-compose.production.yml up -d
 #
-# - SQLite data is persisted in the sqlite_data Docker volume (mounted at /rails/storage).
-# - For production, adapt environment variables and ensure you use secure secret management.
+# 3. Run migrations:
+#    docker compose -f docker-compose.production.yml run --rm runner bin/rails db:migrate
+#
+# For Kamal deployment, use: kamal deploy

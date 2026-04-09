@@ -2,9 +2,10 @@ require_relative "test_helper"
 
 class OrdersControllerTest < ActionDispatch::IntegrationTest
   def setup
-    @kit = PromiseFitnessKit.create!(name: "Test Kit", description: "Test Description", slug: "test-kit")
-    @coupon = CouponCode.create!(code: "SK1000AAA", usage: "unused")
-    @used_coupon = CouponCode.create!(code: "SK1001BBB", usage: "used")
+    @unique_suffix = Time.current.to_i
+    @kit = PromiseFitnessKit.create!(name: "Test Kit #{@unique_suffix}", description: "Test Description", slug: "test-kit-ctrl-#{@unique_suffix}")
+    @coupon = CouponCode.create!(code: "SK#{@unique_suffix}AAA", usage: "unused")
+    @used_coupon = CouponCode.create!(code: "SK#{@unique_suffix + 1}BBB", usage: "used")
     @valid_params = {
       order: {
         first_name: "John",
@@ -13,11 +14,19 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
         city: "San Francisco",
         state: "CA",
         zip: "94102",
-        phone: "415-555-1234",
+        phone: "4155551234",
         email: "john@example.com",
-        coupon_code_input: "SK1000AAA"
+        coupon_code_input: @coupon.code
       }
     }
+  end
+
+  def teardown
+    ExportedOrder.delete_all
+    OrderExport.delete_all
+    Order.delete_all
+    CouponCode.delete_all
+    PromiseFitnessKit.delete_all
   end
 
   # New Action Tests
@@ -30,9 +39,9 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     get fitness_kit_order_url(slug: @kit.slug)
     assert_response :success
     # Ensure the page includes the kit name and the order form (observable behavior)
-    assert_select 'h1', text: /You have selected:/i
-    assert_select 'h1', text: /#{@kit.name}/
-    assert_select 'form.order-form'
+    assert_select "h1", text: /You have selected:/i
+    assert_select "h1", text: /#{@kit.name}/
+    assert_select "form.order-form"
   end
 
   test "should redirect to root for invalid kit" do
@@ -44,7 +53,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
   # Create Action - Success Tests
   test "should create order with valid params" do
-    assert_difference('Order.count', 1) do
+    assert_difference("Order.count", 1) do
       post create_fitness_kit_order_url(slug: @kit.slug), params: @valid_params
     end
   end
@@ -62,10 +71,13 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should increment order confirmation number" do
-    existing_order_count = Order.count
+    Order.delete_all
+    Sequence.delete_all
+
     post create_fitness_kit_order_url(slug: @kit.slug), params: @valid_params
     order = Order.last
-    assert_equal existing_order_count + 1, order.order_confirmation
+    # After deleting all orders and sequences, first order should have confirmation 1
+    assert_equal 1, order.order_confirmation
   end
 
   test "should set success flash message" do
@@ -78,7 +90,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     params = @valid_params.deep_dup
     params[:order][:coupon_code_input] = "INVALID999"
 
-    assert_no_difference('Order.count') do
+    assert_no_difference("Order.count") do
       post create_fitness_kit_order_url(slug: @kit.slug), params: params
     end
   end
@@ -90,8 +102,8 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     post create_fitness_kit_order_url(slug: @kit.slug), params: params
     assert_response :unprocessable_entity
     # New was rendered with an error message shown in the page
-    assert_select 'div.alert-error', text: /Invalid coupon code/
-    assert_select 'form.order-form'
+    assert_select "div.alert-error", text: /Invalid coupon code/
+    assert_select "form.order-form"
   end
 
   test "should not create order with used coupon" do
@@ -100,7 +112,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     # finds the coupon and validates its used state.
     params[:order][:coupon_code_input] = "SK1001BBB"
 
-    assert_no_difference('Order.count') do
+    assert_no_difference("Order.count") do
       post create_fitness_kit_order_url(slug: @kit.slug), params: params
     end
   end
@@ -113,7 +125,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
     # check that the error flash was set to the more specific message
     assert_equal "This code has been used before and can no longer be used to place an order", flash[:error]
-    assert_select 'form.order-form'
+    assert_select "form.order-form"
   end
 
   test "should not create order with missing fields" do
@@ -121,7 +133,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     params[:order].delete(:first_name)
     params[:order].delete(:email)
 
-    assert_no_difference('Order.count') do
+    assert_no_difference("Order.count") do
       post create_fitness_kit_order_url(slug: @kit.slug), params: params
     end
   end
@@ -133,8 +145,8 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     post create_fitness_kit_order_url(slug: @kit.slug), params: params
     assert_response :unprocessable_entity
     # Expect the form to be re-rendered and validation error messages to appear
-    assert_select 'form.order-form'
-    assert_select 'div.alert-error', text: /first name/i
+    assert_select "form.order-form"
+    assert_select "div.alert-error", text: /first name/i
   end
 
   test "should return 422 for validation errors" do
@@ -192,8 +204,8 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     get order_url(order)
     assert_response :success
     # Confirm the order is rendered by checking the confirmation number and kit name appear
-    assert_select 'strong', text: order.formatted_order_confirmation
-    assert_select 'strong', text: order.promise_fitness_kit.name
+    assert_select "strong", text: order.formatted_order_confirmation
+    assert_select "strong", text: order.promise_fitness_kit.name
   end
 
   test "should return 404 for invalid order" do

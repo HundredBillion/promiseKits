@@ -11,27 +11,26 @@
 #  - status: 'pending' (created by scheduler or UI)
 #  - call `reserve_orders!(ends_at: ...)` to atomically reserve orders for this run.
 #  - status -> 'running'
-#  - build file using OrderExport::Builder and email via Admin::OrderExportMailer
+#  - build file using OrderExportBuilder and email via Admin::OrderExportMailer
 #  - on success: mark_succeeded!(filename)
 #  - on failure: mark_failed!(error_message)
 #
 class OrderExport < ApplicationRecord
-  has_many :exported_orders, dependent: :restrict_with_exception
+  has_many :exported_orders, inverse_of: :order_export, dependent: :restrict_with_exception
   has_many :orders, through: :exported_orders
 
-  enum status: {
-    pending: 'pending',
-    running: 'running',
-    succeeded: 'succeeded',
-    failed: 'failed'
+  enum :status, {
+    pending: "pending",
+    running: "running",
+    succeeded: "succeeded",
+    failed: "failed"
   }
 
   validates :status, presence: true
   validates :scheduled_for, presence: true
 
-  # Returns the most recent successful export (or nil)
   def self.last_successful
-    where(status: 'succeeded').order(ends_at: :desc).limit(1).first
+    where(status: "succeeded").order(ends_at: :desc).limit(1).first
   end
 
   # Atomically reserve orders for inclusion in this export.
@@ -54,8 +53,8 @@ class OrderExport < ApplicationRecord
 
     # Select candidate order ids in deterministic order.
     scope = ::Order.all
-    scope = scope.where('created_at > ?', starts_at) if starts_at.present?
-    scope = scope.where('created_at <= ?', ends_at)
+    scope = scope.where("created_at > ?", starts_at) if starts_at.present?
+    scope = scope.where("created_at <= ?", ends_at)
     order_ids = scope.order(:created_at).pluck(:id)
 
     # Prepare for reservation
@@ -63,12 +62,12 @@ class OrderExport < ApplicationRecord
 
     # Use DB-optimized bulk insert on Postgres, fall back to batched per-row inserts otherwise.
     self.transaction do
-      update!(status: 'running', started_at: Time.current.utc, ends_at: ends_at)
+      update!(status: "running", started_at: Time.current.utc, ends_at: ends_at)
 
       conn = ActiveRecord::Base.connection
       adapter = conn.adapter_name.to_s.downcase
 
-      if adapter.include?('post') && order_ids.any?
+      if adapter.include?("post") && order_ids.any?
         # Postgres: bulk insert with ON CONFLICT DO NOTHING for efficiency and concurrency-safety.
         # Build a VALUES list safely by quoting each element.
         now_sql = conn.quote(Time.current.utc)
@@ -113,11 +112,11 @@ class OrderExport < ApplicationRecord
 
   # Mark export succeeded and persist the filename used
   def mark_succeeded!(filename = nil)
-    update!(status: 'succeeded', filename: filename, error_message: nil)
+    update!(status: "succeeded", filename: filename, error_message: nil)
   end
 
   # Mark export failed and record error message
   def mark_failed!(error_message = nil)
-    update!(status: 'failed', error_message: error_message.to_s)
+    update!(status: "failed", error_message: error_message.to_s)
   end
 end
