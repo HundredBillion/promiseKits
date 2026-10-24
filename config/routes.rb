@@ -42,6 +42,7 @@ Rails.application.routes.draw do
     # Provides admin form to request immediate exports and enqueue the export job.
     resource :order_exports, only: [ :new, :create ]
     post "order_exports/:id/retry", to: "order_exports#retry", as: :retry_order_export
+    post "order_exports/:id/review", to: "order_exports#review", as: :review_order_export
   end
 
   # Redirect /admin to /admin/dashboard or login

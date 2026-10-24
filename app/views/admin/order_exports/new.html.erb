@@ -24,10 +24,14 @@
               <% if export.failed? %>
                 <%= button_to "Retry", admin_retry_order_export_path(export), method: :post, class: "btn-create" %>
               <% elsif export.review_required? %>
-                Check whether the recipient received this export.
+                Confirm the worker has stopped and check whether the recipient received this export.
                 <%= button_to "Confirm not received and retry", admin_retry_order_export_path(export), method: :post,
                   params: { confirmed_undelivered: "1" }, class: "btn-create",
-                  data: { turbo_confirm: "I checked with the recipient and confirmed this export was not received. Retry delivery?" } %>
+                  data: { turbo_confirm: "I confirmed the worker stopped and the recipient did not receive this export. Retry delivery?" } %>
+              <% elsif export.delivery_review_due? %>
+                Delivery started more than an hour ago. Check that the worker has stopped.
+                <%= button_to "Review delivery", admin_review_order_export_path(export), method: :post,
+                  class: "btn-create", data: { turbo_confirm: "I checked that the worker has stopped. Review this delivery?" } %>
               <% end %>
             </td>
           </tr>

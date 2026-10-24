@@ -147,7 +147,7 @@ class SendOrderExportJobTest < ActiveSupport::TestCase
     assert_equal 1, delivery_attempts
   end
 
-  test "a restarted job does not resend after delivery began" do
+  test "a duplicate job leaves an in-progress delivery alone" do
     job = Admin::SendOrderExportJob.new
     export = OrderExport.create!(
       job_id: job.job_id,
@@ -161,8 +161,8 @@ class SendOrderExportJobTest < ActiveSupport::TestCase
       job.perform(export.scheduled_for, recipient: export.recipient)
     end
 
-    assert_equal "review_required", export.reload.status
-    assert_match(/outcome was not recorded/, export.error_message)
+    assert_equal "running", export.reload.status
+    assert_nil export.error_message
   end
 
   test "an admin retry reuses an earlier failed export" do

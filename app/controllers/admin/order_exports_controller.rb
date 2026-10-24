@@ -41,6 +41,16 @@ class Admin::OrderExportsController < Admin::BaseController
     redirect_to new_admin_order_exports_path, notice: "Export ##{export.id} queued for retry"
   end
 
+  def review
+    export = ::OrderExport.find(params[:id])
+    if export.mark_stale_delivery_for_review!
+      Rails.logger.info("[Admin::OrderExportsController] admin_id=#{current_admin.id} opened delivery review for export_id=#{export.id}")
+      redirect_to new_admin_order_exports_path, notice: "Check that the worker has stopped and the recipient did not receive export ##{export.id} before retrying"
+    else
+      redirect_to new_admin_order_exports_path, alert: "This export is still active or already resolved"
+    end
+  end
+
   # POST /admin/order_exports
   #
   # Accepts these (optional) params via `order_export`:

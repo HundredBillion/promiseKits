@@ -48,10 +48,7 @@ class Admin::SendOrderExportJob < ApplicationJob
     end
     return if export.succeeded? || export.review_required?
 
-    if export.delivery_started_at.present?
-      export.mark_review_required!("Delivery was started but its outcome was not recorded")
-      return
-    end
+    return if export.delivery_started_at.present?
 
     scheduled_for_utc = export.scheduled_for
     recipient = export.recipient

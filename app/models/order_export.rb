@@ -58,7 +58,7 @@ class OrderExport < ApplicationRecord
 
   def reserve_orders_locked!(ends_at:, starts_at:)
     if started_at.present?
-      update!(status: "running", error_message: nil)
+      update!(status: "running", error_message: nil) if pending? || failed?
       return orders.order(:created_at)
     end
 
@@ -124,6 +124,18 @@ class OrderExport < ApplicationRecord
     timestamp = Time.current.utc
     changed = self.class.where(id: id, status: "review_required").where.not(delivery_started_at: nil)
       .update_all(status: "failed", delivery_started_at: nil, error_message: "Admin confirmed delivery was not received", updated_at: timestamp)
+    reload if changed == 1
+    changed == 1
+  end
+
+  def delivery_review_due?
+    running? && delivery_started_at.present? && delivery_started_at <= 1.hour.ago
+  end
+
+  def mark_stale_delivery_for_review!
+    timestamp = Time.current.utc
+    changed = self.class.where(id: id, status: "running", delivery_started_at: ..1.hour.ago)
+      .update_all(status: "review_required", error_message: "Delivery outcome was not recorded after one hour", updated_at: timestamp)
     reload if changed == 1
     changed == 1
   end

@@ -179,6 +179,28 @@ class OrderExportTest < ActiveSupport::TestCase
     assert_equal "succeeded", export.reload.status
   end
 
+  test "a stale reservation attempt cannot reopen a successful export" do
+    export = OrderExport.create!(scheduled_for: Time.current.utc)
+    export.reserve_orders!(ends_at: export.scheduled_for)
+    stale = OrderExport.find(export.id)
+    assert export.begin_delivery!
+    export.mark_succeeded!("orders.xlsx")
+
+    assert_equal export.orders.pluck(:id), stale.reserve_orders!(ends_at: stale.scheduled_for).pluck(:id)
+    assert_equal "succeeded", export.reload.status
+  end
+
+  test "only a stale running delivery can enter manual review" do
+    recent = OrderExport.create!(scheduled_for: Time.current.utc, status: "running", delivery_started_at: 10.minutes.ago)
+    stale = OrderExport.create!(scheduled_for: Time.current.utc, status: "running", delivery_started_at: 2.hours.ago)
+
+    assert_not recent.delivery_review_due?
+    assert_not recent.mark_stale_delivery_for_review!
+    assert stale.delivery_review_due?
+    assert stale.mark_stale_delivery_for_review!
+    assert_equal "review_required", stale.status
+  end
+
   test "exported_order uniqueness validation prevents duplicate exported rows" do
     export = OrderExport.create!(status: "succeeded", scheduled_for: Time.current.utc, ends_at: Time.current.utc)
     eo = ExportedOrder.create!(order_export: export, order: @order_in_window_1)

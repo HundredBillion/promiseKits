@@ -77,4 +77,17 @@ class AdminOrderExportsRequestsTest < ActionDispatch::IntegrationTest
     assert_nil uncertain.reload.delivery_started_at
     assert_equal "failed", uncertain.status
   end
+
+  test "admin can open review only for a stale delivery" do
+    login_as_admin(@admin)
+    recent = OrderExport.create!(status: "running", scheduled_for: Time.current.utc, recipient: "ops@example.com", delivery_started_at: 10.minutes.ago)
+    stale = OrderExport.create!(status: "running", scheduled_for: Time.current.utc, recipient: "ops@example.com", delivery_started_at: 2.hours.ago)
+
+    post admin_review_order_export_path(recent)
+    assert_equal "running", recent.reload.status
+
+    post admin_review_order_export_path(stale)
+    assert_redirected_to new_admin_order_exports_path
+    assert_equal "review_required", stale.reload.status
+  end
 end
