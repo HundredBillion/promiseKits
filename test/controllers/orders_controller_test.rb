@@ -208,6 +208,35 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_select "strong", text: order.promise_fitness_kit.name
   end
 
+  test "public confirmation hides customer details" do
+    order = Order.create!(@valid_params[:order].except(:coupon_code_input).merge(
+      promise_fitness_kit: @kit, coupon_code: @coupon, description: "Private note"
+    ))
+
+    get order_url(order)
+
+    assert_response :success
+    assert_select "strong", text: order.formatted_order_confirmation
+    assert_no_match(/John Doe|123 Main St|john@example.com|4155551234|Private note/, response.body)
+  end
+
+  test "admin order details require login" do
+    order = Order.create!(@valid_params[:order].except(:coupon_code_input).merge(
+      promise_fitness_kit: @kit, coupon_code: @coupon
+    ))
+
+    get admin_order_path(order)
+    assert_redirected_to admin_login_path
+
+    admin = AdminUser.create!(username: "orderadmin#{@unique_suffix}", password: "password123")
+    post admin_login_path, params: { username: admin.username, password: "password123" }
+    get admin_order_path(order)
+
+    assert_response :success
+    assert_match(/123 Main St/, response.body)
+    assert_match(/john@example.com/, response.body)
+  end
+
   test "should return 404 for invalid order" do
     get order_url(id: 99999)
     assert_response :not_found

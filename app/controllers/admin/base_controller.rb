@@ -1,4 +1,5 @@
 class Admin::BaseController < ApplicationController
+  include AdminSession
   before_action :require_admin
   layout "admin"
 
@@ -10,8 +11,5 @@ class Admin::BaseController < ApplicationController
     end
   end
 
-  def current_admin
-    @current_admin ||= AdminUser.find_by(id: session[:admin_id]) if session[:admin_id]
-  end
   helper_method :current_admin
 end

@@ -57,7 +57,7 @@ class Admin::BaseControllerTest < ActionDispatch::IntegrationTest
     controller.response = ActionDispatch::Response.new
 
     def controller.session
-      { admin_id: @admin.id }
+      { admin_id: @admin.id, admin_expires_at: 1.hour.from_now }
     end
 
     # Define the instance variable for the admin
@@ -73,7 +73,7 @@ class Admin::BaseControllerTest < ActionDispatch::IntegrationTest
     controller.response = ActionDispatch::Response.new
 
     def controller.session
-      { admin_id: @admin.id }
+      { admin_id: @admin.id, admin_expires_at: 1.hour.from_now }
     end
 
     controller.instance_variable_set(:@admin, @admin)

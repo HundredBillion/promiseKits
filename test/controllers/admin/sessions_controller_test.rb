@@ -76,6 +76,15 @@ class Admin::SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_in_delta expected_expiry.to_i, actual_expiry.to_i, 60
   end
 
+  test "expired admin session cannot access dashboard" do
+    post admin_login_path, params: { username: @admin.username, password: "password123" }
+
+    travel 13.hours do
+      get admin_dashboard_path
+      assert_redirected_to admin_login_path
+    end
+  end
+
   # DELETE /admin/logout
   test "should log out and clear session" do
     # Log in first
