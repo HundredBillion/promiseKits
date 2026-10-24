@@ -9,7 +9,7 @@ class FloridaOrdersExportMailerTest < ActionMailer::TestCase
       { name: "WK-1", total: 2 }
     ]
 
-    mail = AdminReports::FloridaOrdersExportMailer.florida_orders_email(
+    mail = Admin::FloridaOrdersExportMailer.florida_orders_email(
       recipient: "reports@example.com",
       month_name: "March 2026",
       summary: summary
@@ -26,7 +26,7 @@ class FloridaOrdersExportMailerTest < ActionMailer::TestCase
       { name: "PK-1", total: 0 }
     ]
 
-    mail = AdminReports::FloridaOrdersExportMailer.florida_orders_email(
+    mail = Admin::FloridaOrdersExportMailer.florida_orders_email(
       recipient: "reports@example.com",
       month_name: "January 2026",
       summary: summary
@@ -47,7 +47,7 @@ class FloridaOrdersExportMailerTest < ActionMailer::TestCase
       { name: "WK-1", total: 3 }
     ]
 
-    mail = AdminReports::FloridaOrdersExportMailer.florida_orders_email(
+    mail = Admin::FloridaOrdersExportMailer.florida_orders_email(
       recipient: "reports@example.com",
       month_name: "February 2026",
       summary: summary
@@ -62,7 +62,7 @@ class FloridaOrdersExportMailerTest < ActionMailer::TestCase
       { name: "SK-1", total: 1 }
     ]
 
-    mail = AdminReports::FloridaOrdersExportMailer.florida_orders_email(
+    mail = Admin::FloridaOrdersExportMailer.florida_orders_email(
       recipient: "reports@example.com",
       month_name: "March 2026",
       summary: summary
@@ -89,7 +89,7 @@ class FloridaOrdersExportMailerTest < ActionMailer::TestCase
       { name: "SK-3", total: 0 }
     ]
 
-    mail = AdminReports::FloridaOrdersExportMailer.florida_orders_email(
+    mail = Admin::FloridaOrdersExportMailer.florida_orders_email(
       recipient: "reports@example.com",
       month_name: "March 2026",
       summary: summary

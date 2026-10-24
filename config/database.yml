@@ -25,14 +25,15 @@ test:
 production:
   primary:
     url: <%= ENV["DATABASE_URL"] || "sqlite3:storage/production.sqlite3" %>
+    seeds: false
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
     timeout: 5000
   cache:
-    url: <%= ENV["DATABASE_URL"] || "sqlite3:storage/production_cache.sqlite3" %>
+    url: <%= ENV["CACHE_DATABASE_URL"] || ENV["DATABASE_URL"] || "sqlite3:storage/production_cache.sqlite3" %>
     migrations_paths: db/cache_migrate
   queue:
-    url: <%= ENV["DATABASE_URL"] || "sqlite3:storage/production_queue.sqlite3" %>
+    url: <%= ENV["QUEUE_DATABASE_URL"] || ENV["DATABASE_URL"] || "sqlite3:storage/production_queue.sqlite3" %>
     migrations_paths: db/queue_migrate
   cable:
-    url: <%= ENV["DATABASE_URL"] || "sqlite3:storage/production_cable.sqlite3" %>
+    url: <%= ENV["CABLE_DATABASE_URL"] || ENV["DATABASE_URL"] || "sqlite3:storage/production_cable.sqlite3" %>
     migrations_paths: db/cable_migrate

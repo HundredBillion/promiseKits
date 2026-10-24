@@ -41,11 +41,19 @@ env:
   secret:
     - RAILS_MASTER_KEY
     - POSTGRES_PASSWORD
+    - ORDER_EXPORT_RECIPIENT
+    - SMTP_ADDRESS
+    - SMTP_PORT
+    - SMTP_DOMAIN
+    - SMTP_USER
+    - SMTP_PASSWORD
+    - DEFAULT_FROM_EMAIL
   clear:
     POSTGRES_DB: promisekits_production
     POSTGRES_USER: postgres
     DB_HOST: 192.168.0.2
     DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DB_HOST}:5432/${POSTGRES_DB}
+    MAILER_HOST: promisekits.com
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
     SOLID_QUEUE_IN_PUMA: true

@@ -51,23 +51,19 @@ class Admin::OrderExportMailerTest < ActionMailer::TestCase
     end
   end
 
-  test "export_email still delivers when attachment missing (no file present)" do
+  test "export_email rejects a missing attachment" do
     non_existent_path = Rails.root.join("tmp", "does_not_exist_#{SecureRandom.hex}.xlsx").to_s
 
-    mail = Admin::OrderExportMailer.export_email(
-      recipient: "ops@example.com",
-      file_path: non_existent_path,
-      filename: "missing.xlsx",
-      export_id: @export.id,
-      scheduled_for: @export.scheduled_for,
-      exported_count: 0
-    ).deliver_now
-
-    assert_not ActionMailer::Base.deliveries.empty?, "Expected an email to be delivered even when file is missing"
-
-    # No attachments because file did not exist
-    assert_equal 0, mail.attachments.length
-    assert_match(/\A0 Orders\b/, mail.subject)
-    assert_includes mail.body.encoded, "Export ID: #{@export.id}"
+    assert_raises Errno::ENOENT do
+      Admin::OrderExportMailer.export_email(
+        recipient: "ops@example.com",
+        file_path: non_existent_path,
+        filename: "missing.xlsx",
+        export_id: @export.id,
+        scheduled_for: @export.scheduled_for,
+        exported_count: 0
+      ).deliver_now
+    end
+    assert_empty ActionMailer::Base.deliveries
   end
 end

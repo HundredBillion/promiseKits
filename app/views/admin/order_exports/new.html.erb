@@ -9,6 +9,37 @@
     </div>
   </div>
 
+  <div class="admin-coupons-card coupon-list" style="padding:1rem; margin-top:1rem;">
+    <h2>Recent exports</h2>
+    <table class="coupon-table">
+      <thead><tr><th>ID</th><th>Status</th><th>Orders</th><th>Details</th><th>Action</th></tr></thead>
+      <tbody>
+        <% @recent_exports.each do |export| %>
+          <tr>
+            <td><%= export.id %></td>
+            <td><%= export.status.humanize %></td>
+            <td><%= export.reserved_count %></td>
+            <td><%= export.error_message %></td>
+            <td>
+              <% if export.failed? %>
+                <%= button_to "Retry", admin_retry_order_export_path(export), method: :post, class: "btn-create" %>
+              <% elsif export.review_required? %>
+                Confirm the worker has stopped and check whether the recipient received this export.
+                <%= button_to "Confirm not received and retry", admin_retry_order_export_path(export), method: :post,
+                  params: { confirmed_undelivered: "1" }, class: "btn-create",
+                  data: { turbo_confirm: "I confirmed the worker stopped and the recipient did not receive this export. Retry delivery?" } %>
+              <% elsif export.delivery_review_due? %>
+                Delivery started more than an hour ago. Check that the worker has stopped.
+                <%= button_to "Review delivery", admin_review_order_export_path(export), method: :post,
+                  class: "btn-create", data: { turbo_confirm: "I checked that the worker has stopped. Review this delivery?" } %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
   <div class="admin-coupons-filters coupons-filters" style="margin-bottom:1rem;">
     <% if @last_export.present? %>
       <div style="display:flex; flex-direction:column; gap:0.25rem;">
@@ -44,7 +75,7 @@
         <%= submit_tag 'Since last export', class: 'btn-set-sequence' %>
 
         <span style="margin-left:1rem; color:#6b7280; font-size:0.95rem;">
-          Note: Scheduled exports run Mon/Wed/Fri at 7:00 AM <%= OrderExportSettings::Config.timezone %>.
+          Note: Scheduled exports run <%= OrderExportSettings::Config.schedule_description %>.
         </span>
       </div>
     <% end %>

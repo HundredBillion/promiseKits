@@ -70,7 +70,7 @@ class FloridaOrdersExportJobTest < ActiveSupport::TestCase
 
     # Run job for March 2026 (previous month from April 2026)
     travel_to Date.new(2026, 4, 1) do
-      AdminReports::FloridaOrdersExportJob.new.perform(2026, 3, recipient: recipient)
+      Admin::FloridaOrdersExportJob.new.perform(2026, 3, recipient: recipient)
     end
 
     assert_equal 1, ActionMailer::Base.deliveries.size
@@ -94,7 +94,7 @@ class FloridaOrdersExportJobTest < ActiveSupport::TestCase
 
     # Travel to April 2026, run without explicit month/year
     travel_to Date.new(2026, 4, 1) do
-      AdminReports::FloridaOrdersExportJob.new.perform(nil, nil, recipient: recipient)
+      Admin::FloridaOrdersExportJob.new.perform(nil, nil, recipient: recipient)
     end
 
     assert_equal 1, ActionMailer::Base.deliveries.size
@@ -105,7 +105,7 @@ class FloridaOrdersExportJobTest < ActiveSupport::TestCase
 
   test "perform raises error when no recipient configured" do
     assert_raises ArgumentError do
-      AdminReports::FloridaOrdersExportJob.new.perform(2026, 3, recipient: nil)
+      Admin::FloridaOrdersExportJob.new.perform(2026, 3, recipient: nil)
     end
 
     assert_equal 0, ActionMailer::Base.deliveries.size
@@ -115,7 +115,7 @@ class FloridaOrdersExportJobTest < ActiveSupport::TestCase
     recipient = "reports@example.com"
 
     travel_to Date.new(2026, 4, 1) do
-      AdminReports::FloridaOrdersExportJob.new.perform(2026, 3, recipient: recipient)
+      Admin::FloridaOrdersExportJob.new.perform(2026, 3, recipient: recipient)
     end
 
     assert_equal 1, ActionMailer::Base.deliveries.size
@@ -144,7 +144,7 @@ class FloridaOrdersExportJobTest < ActiveSupport::TestCase
     )
 
     travel_to Date.new(2026, 4, 1) do
-      AdminReports::FloridaOrdersExportJob.new.perform(2026, 3, recipient: recipient)
+      Admin::FloridaOrdersExportJob.new.perform(2026, 3, recipient: recipient)
     end
 
     mail = ActionMailer::Base.deliveries.last
@@ -173,7 +173,7 @@ class FloridaOrdersExportJobTest < ActiveSupport::TestCase
     recipient = "reports@example.com"
 
     travel_to Date.new(2026, 4, 1) do
-      AdminReports::FloridaOrdersExportJob.new.perform(2026, 3, recipient: recipient)
+      Admin::FloridaOrdersExportJob.new.perform(2026, 3, recipient: recipient)
     end
 
     mail = ActionMailer::Base.deliveries.last

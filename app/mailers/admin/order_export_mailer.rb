@@ -16,9 +16,9 @@ module Admin
     # - exported_count: optional Integer provided by the job to avoid extra DB queries
     #
     # Subject formatting (per spec):
-    # - Monday run  => "<total> Orders Fri-Mon 7am <MM/DD/YYYY>"
-    # - Wednesday   => "<total> Orders Mon-Wed 7am <MM/DD/YYYY>"
-    # - Friday      => "<total> Orders Wed-Fri 7am <MM/DD/YYYY>"
+    # - Monday run  => "<total> Orders Fri-Mon <time> <MM/DD/YYYY>"
+    # - Wednesday   => "<total> Orders Mon-Wed <time> <MM/DD/YYYY>"
+    # - Friday      => "<total> Orders Wed-Fri <time> <MM/DD/YYYY>"
     #
     # The date in the subject is the scheduled run date expressed in America/New_York.
     def export_email(recipient:, file_path:, filename:, export_id: nil, scheduled_for: nil, exported_count: nil)
@@ -54,16 +54,10 @@ module Admin
 
       mail_subject = "#{total_count} Orders #{window_label}"
 
-      # Attach the generated file if present. Read in binary mode.
-      if File.exist?(file_path)
-        attachments[filename] = {
-          mime_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          content: File.binread(file_path)
-        }
-      else
-        # If file missing, still send an alert-style email (should be rare)
-        Rails.logger.warn("[OrderExportMailer] Attachment not found at #{file_path} for export_id=#{export_id}")
-      end
+      attachments[filename] = {
+        mime_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        content: File.binread(file_path)
+      }
 
       # Compose body with a small summary and audit reference
       @recipient = recipient

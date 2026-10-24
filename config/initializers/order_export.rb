@@ -9,14 +9,12 @@
 # Usage:
 #   Rails.configuration.x.order_export.recipient_email
 #   Rails.configuration.x.order_export.timezone
-#   OrderExportSettings::Config.next_scheduled_for # => returns a UTC Time for the next scheduled run
 #
 Rails.application.configure do
   config.x.order_export = ActiveSupport::InheritableOptions.new(
     # Primary recipient for scheduled export emails. Can be overridden by ENV.
-    recipient_email: ENV.fetch("ORDER_EXPORT_RECIPIENT", "reports@example.com"),
+    recipient_email: ENV["ORDER_EXPORT_RECIPIENT"].presence || (Rails.env.production? ? nil : "reports@example.com"),
 
-    # From address used by the export mailer (fallback)
     from_email: ENV.fetch("ORDER_EXPORT_FROM", "no-reply@example.com"),
 
     # Timezone to use for scheduling and human-readable dates in emails.
@@ -29,10 +27,7 @@ Rails.application.configure do
 
     # Scheduled local time (hour/minute) in the configured timezone
     schedule_hour: ENV.fetch("ORDER_EXPORT_HOUR", 7).to_i,
-    schedule_minute: ENV.fetch("ORDER_EXPORT_MINUTE", 0).to_i,
-
-    # Optional: maximum number of rows per XLSX sheet (if you later implement splitting)
-    sheet_row_limit: ENV.fetch("ORDER_EXPORT_SHEET_ROW_LIMIT", 100_000).to_i
+    schedule_minute: ENV.fetch("ORDER_EXPORT_MINUTE", 0).to_i
   )
 end
 
@@ -65,43 +60,35 @@ module OrderExportSettings
       Rails.configuration.x.order_export.schedule_minute
     end
 
-    def next_scheduled_for(from_time = Time.current)
-      tz = ActiveSupport::TimeZone[timezone]
-      raise "Unknown timezone #{timezone}" unless tz
+    def schedule_cron
+      "#{schedule_minute} #{schedule_hour} * * #{schedule_weekdays.join(',')} #{timezone}"
+    end
 
-      local_from = from_time.in_time_zone(tz)
+    def monthly_schedule_cron
+      "#{schedule_minute} #{schedule_hour} 1 * * #{timezone}"
+    end
 
-      (0..7).each do |offset|
-        candidate_date = (local_from.to_date + offset)
-        candidate_local = tz.local(candidate_date.year, candidate_date.month, candidate_date.day,
-                                   schedule_hour, schedule_minute, 0)
-
-        if schedule_weekdays.include?(candidate_local.wday)
-          return candidate_local.utc if candidate_local > local_from
-        end
-      end
-
-      future = local_from + 7.days
-      (0..7).each do |offset|
-        candidate_date = (future.to_date + offset)
-        candidate_local = tz.local(candidate_date.year, candidate_date.month, candidate_date.day,
-                                   schedule_hour, schedule_minute, 0)
-        return candidate_local.utc if schedule_weekdays.include?(candidate_local.wday)
-      end
+    def schedule_description
+      days = schedule_weekdays.map { |day| Date::ABBR_DAYNAMES.fetch(day) }.join("/")
+      hour = schedule_hour % 12
+      hour = 12 if hour.zero?
+      period = schedule_hour < 12 ? "AM" : "PM"
+      "#{days} at #{hour}:#{format('%02d', schedule_minute)} #{period} #{timezone}"
     end
 
     def window_label_for(scheduled_for_utc)
       tz = ActiveSupport::TimeZone[timezone]
       local = scheduled_for_utc.in_time_zone(tz)
       date_str = local.strftime("%m/%d/%Y")
+      time_str = local.min.zero? ? local.strftime("%-I%P") : local.strftime("%-I:%M%P")
 
       case local.wday
       when 1
-        "Fri-Mon 7am #{date_str}"
+        "Fri-Mon #{time_str} #{date_str}"
       when 3
-        "Mon-Wed 7am #{date_str}"
+        "Mon-Wed #{time_str} #{date_str}"
       when 5
-        "Wed-Fri 7am #{date_str}"
+        "Wed-Fri #{time_str} #{date_str}"
       else
         "#{date_str} #{local.strftime('%H:%M %Z')}"
       end

@@ -1,6 +1,4 @@
-version: "3.8"
-
-# Docker Compose for promisekits (Rails + Sidekiq + Redis)
+# Docker Compose for promisekits (Rails + Solid Queue + Redis)
 # - This file is for development/staging usage.
 # - Do NOT store secrets in this file. Use an external .env or your orchestration secrets manager.
 # - Environment variables referenced below should be provided via .env or runtime secrets.
@@ -54,12 +52,13 @@ services:
     networks:
       - promisekits_net
 
+  # Keep the service key during migration so Compose replaces the previous worker.
   sidekiq:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: promisekits_sidekiq
-    command: bash -lc "bundle exec sidekiq -e ${RAILS_ENV:-production} -C config/sidekiq.yml"
+    container_name: promisekits_jobs
+    command: bash -lc "bin/jobs start"
     restart: unless-stopped
     depends_on:
       redis:
@@ -89,8 +88,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: promisekits_runner
-    entrypoint: ["/bin/sh", "-lc"]
-    command: ["bin/rails db:migrate"]
+    command: ["bin/rails", "db:prepare"]
     env_file:
       - .env
     environment:
@@ -132,7 +130,7 @@ networks:
 # - To start the stack:
 #   1. Create a local .env with the required secrets above
 #   2. docker compose build
-#   3. docker compose run --rm runner bin/rails db:create db:migrate
+#   3. docker compose run --rm runner bin/rails db:prepare
 #   4. docker compose up -d web sidekiq
 #
 # - SQLite data is persisted in the sqlite_data Docker volume (mounted at /rails/storage).

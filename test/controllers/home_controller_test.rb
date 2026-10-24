@@ -1,23 +1,16 @@
 require_relative "../test_helper"
 
 class HomeControllerTest < ActionDispatch::IntegrationTest
-  def setup
-    PromiseFitnessKit.delete_all
-  end
-
-  def teardown
-    Order.delete_all
-    CouponCode.delete_all
-    PromiseFitnessKit.delete_all
-  end
-
   test "should get index" do
     get root_url
     assert_response :success
   end
 
   test "should display promise_fitness_kits" do
-    kit = PromiseFitnessKit.create!(name: "Test Kit", description: "Test", slug: "test-kit-home-#{SecureRandom.hex(4)}")
+    PromiseFitnessKit.find_or_create_by!(name: "Test Kit") do |kit|
+      kit.description = "Test"
+      kit.slug = "test-kit-home-#{SecureRandom.hex(4)}"
+    end
     get root_url
     assert_response :success
     assert_select "body"

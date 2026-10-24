@@ -124,6 +124,7 @@ GEM
     ffi (1.17.2-aarch64-linux-musl)
     ffi (1.17.2-arm-linux-gnu)
     ffi (1.17.2-arm-linux-musl)
+    ffi (1.17.2-arm64-darwin)
     ffi (1.17.2-x86_64-linux-gnu)
     ffi (1.17.2-x86_64-linux-musl)
     fugit (1.12.1)
@@ -179,8 +180,7 @@ GEM
     mini_magick (5.3.1)
       logger
     mini_mime (1.1.5)
-    minitest (6.0.1)
-      prism (~> 1.5)
+    minitest (5.27.0)
     msgpack (1.8.0)
     net-imap (0.6.0)
       date
@@ -205,6 +205,8 @@ GEM
       racc (~> 1.4)
     nokogiri (1.19.0-arm-linux-musl)
       racc (~> 1.4)
+    nokogiri (1.19.0-arm64-darwin)
+      racc (~> 1.4)
     nokogiri (1.19.0-x86_64-linux-gnu)
       racc (~> 1.4)
     nokogiri (1.19.0-x86_64-linux-musl)
@@ -217,6 +219,7 @@ GEM
     pg (1.6.3)
     pg (1.6.3-aarch64-linux)
     pg (1.6.3-aarch64-linux-musl)
+    pg (1.6.3-arm64-darwin)
     pg (1.6.3-x86_64-linux)
     pg (1.6.3-x86_64-linux-musl)
     pp (0.6.3)
@@ -279,8 +282,6 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
-    redis-client (0.26.4)
-      connection_pool
     regexp_parser (2.11.3)
     reline (0.6.3)
       io-console (~> 0.5)
@@ -335,8 +336,6 @@ GEM
       ffi (~> 1.12)
       logger
     rubyzip (3.2.2)
-    rufus-scheduler (3.9.2)
-      fugit (~> 1.1, >= 1.11.1)
     securerandom (0.4.1)
     selenium-webdriver (4.40.0)
       base64 (~> 0.2)
@@ -344,15 +343,6 @@ GEM
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 4.0)
       websocket (~> 1.0)
-    sidekiq (8.1.0)
-      connection_pool (>= 3.0.0)
-      json (>= 2.16.0)
-      logger (>= 1.7.0)
-      rack (>= 3.2.0)
-      redis-client (>= 0.26.0)
-    sidekiq-scheduler (6.0.1)
-      rufus-scheduler (~> 3.2)
-      sidekiq (>= 7.3, < 9)
     solid_cable (3.0.12)
       actioncable (>= 7.2)
       activejob (>= 7.2)
@@ -373,6 +363,7 @@ GEM
     sqlite3 (2.9.0-aarch64-linux-musl)
     sqlite3 (2.9.0-arm-linux-gnu)
     sqlite3 (2.9.0-arm-linux-musl)
+    sqlite3 (2.9.0-arm64-darwin)
     sqlite3 (2.9.0-x86_64-linux-gnu)
     sqlite3 (2.9.0-x86_64-linux-musl)
     sshkit (1.25.0)
@@ -388,6 +379,7 @@ GEM
     thor (1.5.0)
     thruster (0.1.16)
     thruster (0.1.16-aarch64-linux)
+    thruster (0.1.16-arm64-darwin)
     thruster (0.1.16-x86_64-linux)
     timeout (0.6.0)
     tsort (0.2.0)
@@ -421,6 +413,7 @@ PLATFORMS
   aarch64-linux-musl
   arm-linux-gnu
   arm-linux-musl
+  arm64-darwin-25
   x86_64-linux
   x86_64-linux-gnu
   x86_64-linux-musl
@@ -437,6 +430,7 @@ DEPENDENCIES
   importmap-rails
   jbuilder
   kamal
+  minitest (~> 5.25)
   pg (~> 1.5)
   propshaft
   puma (>= 5.0)
@@ -444,8 +438,6 @@ DEPENDENCIES
   rspec-rails
   rubocop-rails-omakase
   selenium-webdriver
-  sidekiq
-  sidekiq-scheduler
   solid_cable
   solid_cache
   solid_queue

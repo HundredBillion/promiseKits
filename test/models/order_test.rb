@@ -210,6 +210,16 @@ end
     assert_equal "used", @coupon.usage
   end
 
+  test "stale unused coupon cannot create a second order" do
+    stale_coupon = CouponCode.find(@coupon.id)
+    Order.create!(@valid_attributes)
+
+    assert_no_difference "Order.count" do
+      second = Order.new(@valid_attributes.merge(coupon_code: stale_coupon))
+      assert_not second.save
+    end
+  end
+
   test "should rollback coupon if order fails" do
     # Create an invalid order (missing required field)
     invalid_order = Order.new(@valid_attributes.except(:first_name))
@@ -247,15 +257,6 @@ end
     order = Order.new(@valid_attributes)
     expected = "123 Main St\nSan Francisco, CA 94102"
     assert_equal expected, order.full_address
-  end
-
-  test "next_confirmation_number returns next number" do
-    # Only delete orders, not sequences (which may have foreign keys)
-    Order.delete_all
-
-    next_num = Order.next_confirmation_number
-    order = Order.create!(@valid_attributes)
-    assert_equal next_num, order.order_confirmation
   end
 
   # Association Tests

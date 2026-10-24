@@ -29,10 +29,6 @@ gem "tzinfo-data", platforms: %i[ windows jruby ]
 # Excel generation for .xlsx exports (caxlsx is the maintained fork of axlsx)
 gem "caxlsx"
 
-# Background processing with Sidekiq (used in production) and scheduler for cron-like recurring jobs
-gem "sidekiq"
-gem "sidekiq-scheduler"
-
 # Use the database-backed adapters for Rails.cache, Active Job, and Action Cable
 gem "solid_cache"
 gem "solid_queue"
@@ -51,6 +47,7 @@ gem "thruster", require: false
 gem "image_processing", "~> 1.2"
 
 group :development, :test do
+  gem "minitest", "~> 5.25"
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
 

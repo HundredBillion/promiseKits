@@ -38,11 +38,6 @@ class Order < ApplicationRecord
   # Scopes
   scope :recent, -> { order(created_at: :desc) }
 
-  # Class Methods
-  def self.next_confirmation_number
-    maximum(:order_confirmation).to_i + 1
-  end
-
   # Instance Methods
   def formatted_order_confirmation
     sprintf("%06d", order_confirmation)
@@ -80,7 +75,7 @@ class Order < ApplicationRecord
   def coupon_code_must_be_unused
     return unless coupon_code
 
-    if coupon_code.used?
+    if coupon_code.used? || self.class.exists?(coupon_code_id: coupon_code.id)
       errors.add(:coupon_code, "has already been used")
     end
   end
