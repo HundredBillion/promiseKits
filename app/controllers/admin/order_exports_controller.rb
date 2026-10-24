@@ -3,8 +3,7 @@
 # Controller: Admin::OrderExportsController
 #
 # Responsible for admin UI to request ad-hoc exports of orders. Scheduling of
-# recurring exports (Mon/Wed/Fri 07:00 America/New_York) is handled via Sidekiq
-# scheduler configuration (see config/sidekiq or scheduler config).
+# recurring exports are scheduled through Solid Queue using config/recurring.yml.
 #
 # Notes:
 # - This controller enqueues Admin::SendOrderExportJob which performs the
@@ -17,11 +16,29 @@ class Admin::OrderExportsController < Admin::BaseController
   # GET /admin/order_exports/new
   def new
     @last_export = ::OrderExport.last_successful
+    @recent_exports = ::OrderExport.order(created_at: :desc).limit(20)
     # Default recipient from config (initializer or ENV)
     @default_recipient = OrderExportSettings::Config.recipient_email
     # Default scheduled_for shown to the admin in local (America/New_York) timezone
     tz = ActiveSupport::TimeZone[OrderExportSettings::Config.timezone]
     @default_scheduled_local = Time.current.in_time_zone(tz)
+  end
+
+  def retry
+    export = ::OrderExport.find(params[:id])
+    if export.review_required?
+      unless params[:confirmed_undelivered] == "1" && export.confirm_undelivered!
+        redirect_to new_admin_order_exports_path, alert: "Confirm that the recipient did not receive this export before retrying"
+        return
+      end
+      Rails.logger.info("[Admin::OrderExportsController] admin_id=#{current_admin.id} confirmed export_id=#{export.id} was not delivered")
+    elsif !export.failed?
+      redirect_to new_admin_order_exports_path, alert: "Only failed exports can be retried"
+      return
+    end
+
+    Admin::SendOrderExportJob.perform_later(export.scheduled_for, recipient: export.recipient, manual: true, export_id: export.id)
+    redirect_to new_admin_order_exports_path, notice: "Export ##{export.id} queued for retry"
   end
 
   # POST /admin/order_exports

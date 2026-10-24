@@ -41,6 +41,7 @@ Rails.application.routes.draw do
     # Ad-hoc Order Exports UI (GET new + POST create)
     # Provides admin form to request immediate exports and enqueue the export job.
     resource :order_exports, only: [ :new, :create ]
+    post "order_exports/:id/retry", to: "order_exports#retry", as: :retry_order_export
   end
 
   # Redirect /admin to /admin/dashboard or login

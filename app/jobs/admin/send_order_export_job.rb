@@ -9,7 +9,7 @@
 #  - atomically reserves orders for the export via OrderExport#reserve_orders!
 #  - builds an .xlsx via OrderExportBuilder to a Tempfile
 #  - sends the file via Admin::OrderExportMailer
-#  - marks the export succeeded/failed and ensures temporary file cleanup
+#  - records success, retryable failure, or a delivery that needs review
 #
 # Notes:
 #  - The job accepts an optional `scheduled_for_utc` which should be a Time/String representing
@@ -21,66 +21,75 @@
 class Admin::SendOrderExportJob < ApplicationJob
   queue_as :default
 
-  # Retry a few times on transient errors (exponential backoff)
-  retry_on StandardError, attempts: 3, wait: :exponentially_longer
+  # Retry pre-delivery errors with Active Job's polynomial backoff.
+  retry_on StandardError, attempts: 3, wait: :polynomially_longer
 
   # Perform the export.
   #
   # scheduled_for_utc - optional Time/String; the canonical scheduled time (UTC) that defines the export window end.
   # recipient         - optional String email address to send the export to
   # manual            - optional Boolean to indicate this was triggered manually
-  def perform(scheduled_for_utc = nil, recipient: nil, manual: false)
+  def perform(scheduled_for_utc = nil, recipient: nil, manual: false, export_id: nil)
     scheduled_for_utc = parse_time_to_utc(scheduled_for_utc) || Time.current.utc
     recipient = determine_recipient(recipient)
+    export = if export_id
+      OrderExport.find(export_id)
+    else
+      OrderExport.create_or_find_by!(job_id: job_id) do |run|
+        run.status = "pending"
+        run.scheduled_for = scheduled_for_utc
+        run.recipient = recipient
+      end
+    end
+    if export_id
+      claimed = OrderExport.where(id: export.id, status: "failed").update_all(status: "pending")
+      return if claimed.zero?
+      export.reload
+    end
+    return if export.succeeded? || export.review_required?
 
-    export = OrderExport.create!(status: "pending", scheduled_for: scheduled_for_utc, recipient: recipient)
+    if export.delivery_started_at.present?
+      export.mark_review_required!("Delivery was started but its outcome was not recorded")
+      return
+    end
+
+    scheduled_for_utc = export.scheduled_for
+    recipient = export.recipient
+    delivery_attempted = false
 
     begin
-      # Reserve orders for this export run. The reserve_orders! method handles transactionality
-      # and skips IDs that may have been reserved by concurrent workers.
       reserved_orders = export.reserve_orders!(ends_at: scheduled_for_utc)
-
-      Rails.logger.info("[Admin::SendOrderExportJob] export_id=#{export.id} reserved #{reserved_orders.size} orders (scheduled_for=#{scheduled_for_utc.iso8601})")
-
-      # Build the .xlsx into a Tempfile
       tmpfile = OrderExportBuilder.build_to_tempfile(orders: reserved_orders)
       filename = "orders_export_#{scheduled_for_utc.strftime('%Y%m%d_%H%M%S')}_UTC.xlsx"
-
-      # Send the email synchronously from within the job (deliver_now)
-      Admin::OrderExportMailer.export_email(
+      delivery = Admin::OrderExportMailer.export_email(
         recipient: recipient,
         file_path: tmpfile.path,
         filename: filename,
         export_id: export.id,
         scheduled_for: scheduled_for_utc,
         exported_count: reserved_orders.size
-      ).deliver_now
-
-      # Mark export as succeeded
+      )
+      delivery.message
+      return unless export.begin_delivery!
+      delivery_attempted = true
+      delivery.deliver_now
       export.mark_succeeded!(filename)
-      Rails.logger.info("[Admin::SendOrderExportJob] export_id=#{export.id} succeeded; emailed to #{recipient}")
-
-    rescue => e
-      # Simplified logging to avoid complex interpolation/escaping that can confuse static parsers.
-      Rails.logger.error("[Admin::SendOrderExportJob] export_id=#{export&.id} failed: #{e.class}: #{e.message}")
-      Rails.logger.error(Array(e.backtrace).join("\n"))
-
-      begin
-        export.mark_failed!(e.message) if export
-      rescue => mark_err
-        Rails.logger.error("[Admin::SendOrderExportJob] Failed to mark export failed for export_id=#{export&.id}: #{mark_err.class}: #{mark_err.message}")
-      end
-      # Re-raise so ActiveJob retry mechanism can act
-      raise
-    ensure
-      # Ensure tempfile cleanup
-      if defined?(tmpfile) && tmpfile.respond_to?(:close)
+    rescue StandardError => error
+      Rails.logger.error("[Admin::SendOrderExportJob] export_id=#{export.id} failed: #{error.class}: #{error.message}")
+      if delivery_attempted
         begin
-          tmpfile.close
-          tmpfile.unlink
-        rescue => cleanup_err
-          Rails.logger.warn("[Admin::SendOrderExportJob] Failed to cleanup tempfile for export_id=#{export&.id}: #{cleanup_err.class}: #{cleanup_err.message}")
+          export.mark_review_required!(error.message)
+        rescue StandardError => status_error
+          Rails.logger.error("[Admin::SendOrderExportJob] export_id=#{export.id} needs delivery review; status update failed: #{status_error.class}: #{status_error.message}")
         end
+      else
+        export.mark_failed!(error.message)
+        raise
+      end
+    ensure
+      if defined?(tmpfile) && tmpfile.respond_to?(:close)
+        tmpfile.close
+        tmpfile.unlink
       end
     end
   end

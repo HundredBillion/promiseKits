@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_24_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_24_000003) do
   create_table "admin_users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "password_digest", null: false
@@ -49,14 +49,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_24_000001) do
 
   create_table "order_exports", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "delivery_started_at"
     t.datetime "ends_at"
     t.text "error_message"
     t.string "filename"
+    t.string "job_id"
     t.string "recipient"
     t.datetime "scheduled_for"
     t.datetime "started_at"
     t.string "status", default: "pending", null: false
     t.datetime "updated_at", null: false
+    t.index ["job_id"], name: "index_order_exports_on_job_id", unique: true
     t.index ["scheduled_for"], name: "index_order_exports_on_scheduled_for"
     t.index ["status"], name: "index_order_exports_on_status"
   end

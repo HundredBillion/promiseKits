@@ -13,7 +13,8 @@
 #  - status -> 'running'
 #  - build file using OrderExportBuilder and email via Admin::OrderExportMailer
 #  - on success: mark_succeeded!(filename)
-#  - on failure: mark_failed!(error_message)
+#  - on failure before delivery: mark_failed!(error_message)
+#  - after delivery starts, an uncertain outcome requires review
 #
 class OrderExport < ApplicationRecord
   has_many :exported_orders, inverse_of: :order_export, dependent: :restrict_with_exception
@@ -23,7 +24,8 @@ class OrderExport < ApplicationRecord
     pending: "pending",
     running: "running",
     succeeded: "succeeded",
-    failed: "failed"
+    failed: "failed",
+    review_required: "review_required"
   }
 
   validates :status, presence: true
@@ -49,6 +51,17 @@ class OrderExport < ApplicationRecord
   def reserve_orders!(ends_at:, starts_at: nil)
     raise ArgumentError, "ends_at is required" if ends_at.nil?
 
+    with_lock { reserve_orders_locked!(ends_at: ends_at, starts_at: starts_at) }
+  end
+
+  private
+
+  def reserve_orders_locked!(ends_at:, starts_at:)
+    if started_at.present?
+      update!(status: "running", error_message: nil)
+      return orders.order(:created_at)
+    end
+
     starts_at ||= self.class.last_successful&.ends_at
 
     # Select candidate order ids in deterministic order.
@@ -57,53 +70,20 @@ class OrderExport < ApplicationRecord
     scope = scope.where("created_at <= ?", ends_at)
     order_ids = scope.order(:created_at).pluck(:id)
 
-    # Prepare for reservation
-    reserved_ids = []
-
-    # Use DB-optimized bulk insert on Postgres, fall back to batched per-row inserts otherwise.
+    # The unique index on order_id decides which concurrent export owns each order.
     self.transaction do
       update!(status: "running", started_at: Time.current.utc, ends_at: ends_at)
 
-      conn = ActiveRecord::Base.connection
-      adapter = conn.adapter_name.to_s.downcase
-
-      if adapter.include?("post") && order_ids.any?
-        # Postgres: bulk insert with ON CONFLICT DO NOTHING for efficiency and concurrency-safety.
-        # Build a VALUES list safely by quoting each element.
-        now_sql = conn.quote(Time.current.utc)
-        values_sql = order_ids.map do |oid|
-          "(#{conn.quote(id)}, #{conn.quote(oid)}, #{now_sql}, #{now_sql})"
-        end.join(", ")
-
-        sql = <<~SQL.squish
-          INSERT INTO exported_orders (order_export_id, order_id, created_at, updated_at)
-          VALUES #{values_sql}
-          ON CONFLICT (order_id) DO NOTHING
-        SQL
-
-        conn.execute(sql)
-
-        # Determine which ids were successfully reserved for this export.
-        reserved_ids = ExportedOrder.where(order_export_id: id, order_id: order_ids).pluck(:order_id)
-      else
-        # Non-Postgres or fallback: perform batched per-row creates and gracefully handle uniqueness conflicts.
-        order_ids.each_slice(500) do |batch|
-          batch.each do |oid|
-            begin
-              ExportedOrder.create!(order_export_id: id, order_id: oid)
-              reserved_ids << oid
-            rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
-              # Skip orders reserved concurrently or invalid entries.
-              next
-            end
-          end
-        end
+      order_ids.each_slice(500) do |batch|
+        rows = batch.map { |order_id| { order_export_id: id, order_id: order_id } }
+        ExportedOrder.insert_all(rows, unique_by: :index_exported_orders_on_order_id_unique, record_timestamps: true)
       end
     end
 
-    # Return the reserved orders in chronological order
-    ::Order.where(id: reserved_ids).order(:created_at)
+    orders.order(:created_at)
   end
+
+  public
 
   # Convenience: number of orders reserved for this export
   def reserved_count
@@ -117,6 +97,34 @@ class OrderExport < ApplicationRecord
 
   # Mark export failed and record error message
   def mark_failed!(error_message = nil)
-    update!(status: "failed", error_message: error_message.to_s)
+    timestamp = Time.current.utc
+    changed = self.class.where(id: id, status: [ "pending", "running", "failed" ], delivery_started_at: nil)
+      .update_all(status: "failed", error_message: error_message.to_s, updated_at: timestamp)
+    reload if changed == 1
+    changed == 1
+  end
+
+  def mark_review_required!(error_message = nil)
+    timestamp = Time.current.utc
+    changed = self.class.where(id: id, status: [ "running", "review_required" ]).where.not(delivery_started_at: nil)
+      .update_all(status: "review_required", error_message: error_message.to_s, updated_at: timestamp)
+    reload if changed == 1
+    changed == 1
+  end
+
+  def begin_delivery!
+    timestamp = Time.current.utc
+    claimed = self.class.where(id: id, status: "running", delivery_started_at: nil)
+      .update_all(delivery_started_at: timestamp, updated_at: timestamp)
+    reload if claimed == 1
+    claimed == 1
+  end
+
+  def confirm_undelivered!
+    timestamp = Time.current.utc
+    changed = self.class.where(id: id, status: "review_required").where.not(delivery_started_at: nil)
+      .update_all(status: "failed", delivery_started_at: nil, error_message: "Admin confirmed delivery was not received", updated_at: timestamp)
+    reload if changed == 1
+    changed == 1
   end
 end

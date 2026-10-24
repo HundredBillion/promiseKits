@@ -54,4 +54,27 @@ class AdminOrderExportsRequestsTest < ActionDispatch::IntegrationTest
     assert_response :redirect
     assert_redirected_to admin_login_url
   end
+
+  test "admin can retry a failed export but not uncertain delivery" do
+    login_as_admin(@admin)
+    failed = OrderExport.create!(status: "failed", scheduled_for: Time.current.utc, recipient: "ops@example.com")
+    uncertain = OrderExport.create!(status: "review_required", scheduled_for: Time.current.utc, recipient: "ops@example.com", delivery_started_at: Time.current.utc)
+
+    assert_enqueued_with(job: Admin::SendOrderExportJob, args: [ failed.scheduled_for, { recipient: failed.recipient, manual: true, export_id: failed.id } ]) do
+      post admin_retry_order_export_path(failed)
+    end
+    assert_redirected_to new_admin_order_exports_path
+
+    assert_no_enqueued_jobs do
+      post admin_retry_order_export_path(uncertain)
+    end
+    assert_redirected_to new_admin_order_exports_path
+
+    assert_enqueued_with(job: Admin::SendOrderExportJob, args: [ uncertain.scheduled_for, { recipient: uncertain.recipient, manual: true, export_id: uncertain.id } ]) do
+      post admin_retry_order_export_path(uncertain), params: { confirmed_undelivered: "1" }
+    end
+    assert_redirected_to new_admin_order_exports_path
+    assert_nil uncertain.reload.delivery_started_at
+    assert_equal "failed", uncertain.status
+  end
 end
