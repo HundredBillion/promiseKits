@@ -27,10 +27,18 @@ class OrdersController < ApplicationController
 
     @order.coupon_code = coupon
 
-    if @order.save
-      redirect_to order_path(@order), notice: 'Order placed successfully!'
-    else
-      flash.now[:error] = 'Please correct the errors below'
+    begin
+      if @order.save
+        redirect_to order_path(@order), notice: 'Order placed successfully!'
+      else
+        flash.now[:error] = 'Please correct the errors below'
+        render :new, status: :unprocessable_entity
+      end
+    rescue ActiveRecord::RecordNotUnique
+      raise unless Order.exists?(coupon_code_id: coupon.id)
+
+      @order.errors.add(:coupon_code, 'has already been used')
+      flash.now[:error] = 'This code has been used before and can no longer be used to place an order'
       render :new, status: :unprocessable_entity
     end
   end
