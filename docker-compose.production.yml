@@ -56,6 +56,9 @@ services:
       RAILS_ENV: production
       RAILS_SERVE_STATIC_FILES: "true"
       DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-promisekits_production}
+      CACHE_DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-promisekits_production}_cache
+      QUEUE_DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-promisekits_production}_queue
+      CABLE_DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-promisekits_production}_cable
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       SMTP_ADDRESS: ${SMTP_ADDRESS}
       SMTP_PORT: ${SMTP_PORT}
@@ -74,12 +77,13 @@ services:
     networks:
       - promisekits_net
 
+  # Keep the service key during migration so Compose replaces the previous worker.
   sidekiq:
     build:
       context: .
       dockerfile: Dockerfile.prod
-    container_name: promisekits_sidekiq
-    command: bash -lc "bundle exec sidekiq -e production -C config/sidekiq.yml"
+    container_name: promisekits_jobs
+    command: bash -lc "bin/jobs start"
     restart: unless-stopped
     depends_on:
       postgres:
@@ -91,6 +95,9 @@ services:
     environment:
       RAILS_ENV: production
       DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-promisekits_production}
+      CACHE_DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-promisekits_production}_cache
+      QUEUE_DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-promisekits_production}_queue
+      CABLE_DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-promisekits_production}_cable
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       SMTP_ADDRESS: ${SMTP_ADDRESS}
       SMTP_PORT: ${SMTP_PORT}
@@ -109,13 +116,15 @@ services:
       context: .
       dockerfile: Dockerfile.prod
     container_name: promisekits_runner
-    entrypoint: ["/bin/sh", "-lc"]
-    command: ["bin/rails db:migrate"]
+    command: ["bin/rails", "db:prepare"]
     env_file:
       - .env
     environment:
       RAILS_ENV: production
       DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-promisekits_production}
+      CACHE_DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-promisekits_production}_cache
+      QUEUE_DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-promisekits_production}_queue
+      CABLE_DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-promisekits_production}_cable
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     depends_on:
       postgres:
@@ -140,11 +149,10 @@ networks:
 #    POSTGRES_DB=promisekits_production
 #    RAILS_MASTER_KEY=<from config/master.key>
 #
-# 2. Build and start:
+# 2. Drain pending Sidekiq jobs, then build, prepare all databases, and start:
 #    docker compose -f docker-compose.production.yml build
+#    docker compose -f docker-compose.production.yml up -d postgres
+#    docker compose -f docker-compose.production.yml run --rm runner bin/rails db:prepare
 #    docker compose -f docker-compose.production.yml up -d
-#
-# 3. Run migrations:
-#    docker compose -f docker-compose.production.yml run --rm runner bin/rails db:migrate
 #
 # For Kamal deployment, use: kamal deploy
