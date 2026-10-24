@@ -13,7 +13,7 @@
 Rails.application.configure do
   config.x.order_export = ActiveSupport::InheritableOptions.new(
     # Primary recipient for scheduled export emails. Can be overridden by ENV.
-    recipient_email: ENV.fetch("ORDER_EXPORT_RECIPIENT", "reports@example.com"),
+    recipient_email: ENV["ORDER_EXPORT_RECIPIENT"].presence || (Rails.env.production? ? nil : "reports@example.com"),
 
     from_email: ENV.fetch("ORDER_EXPORT_FROM", "no-reply@example.com"),
 

@@ -111,14 +111,8 @@ class Admin::SendOrderExportJob < ApplicationJob
   def determine_recipient(provided)
     return provided if provided.present?
 
-    # prefer an app config value if available
-    begin
-      cfg = Rails.configuration.x.order_export if defined?(Rails) && Rails.configuration.respond_to?(:x)
-      return cfg.recipient if cfg && cfg.respond_to?(:recipient) && cfg.recipient.present?
-    rescue
-      # swallow config errors and fall back to ENV
-    end
-
-    ENV["ORDER_EXPORT_RECIPIENT"] || ENV["DEFAULT_ORDER_EXPORT_RECIPIENT"] || raise(ArgumentError, "No recipient configured for Order Export")
+    OrderExportSettings::Config.recipient_email.presence ||
+      ENV["DEFAULT_ORDER_EXPORT_RECIPIENT"].presence ||
+      raise(ArgumentError, "No recipient configured for Order Export")
   end
 end

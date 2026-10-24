@@ -192,4 +192,14 @@ class SendOrderExportJobTest < ActiveSupport::TestCase
   ensure
     OrderExportBuilder.define_singleton_method(:build_to_tempfile, original_method) if original_method
   end
+
+  test "scheduled export uses the configured recipient" do
+    config = Rails.configuration.x.order_export
+    original_recipient = config.recipient_email
+    config.recipient_email = "configured@example.com"
+
+    assert_equal "configured@example.com", Admin::SendOrderExportJob.new.send(:determine_recipient, nil)
+  ensure
+    config.recipient_email = original_recipient if config
+  end
 end
